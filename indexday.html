@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manual Operacional UX Envios — Daylog x UX Barueri (PDF)</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel (JSX no navegador) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide UMD -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Evita que blocos quebrem no meio no PDF */
+    .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+
+    /* IMPORTANTE: não cortar diagramas */
+    .mermaid { width: 100%; display: flex; justify-content: center; }
+    /* Deixe o SVG com largura "real" e permita scroll no container */
+    .mermaid svg { max-width: none !important; height: auto !important; }
+
+    /* Força A4 + margens consistentes no PDF */
+    @page { size: A4 portrait; margin: 12mm; }
+
+    @media print {
+      html, body { background: #fff !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .no-print { display: none !important; }
+
+      /* Remove "UI web" no PDF */
+      .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
+      .rounded-b-3xl, .rounded-2xl, .rounded-3xl, .rounded-\[2\.5rem\], .rounded-\[2rem\], .rounded-\[3rem\] { border-radius: 0 !important; }
+
+      /* Largura total no PDF */
+      .max-w-6xl { max-width: 100% !important; margin: 0 !important; }
+
+      /* Quebras de página */
+      .page-break { break-before: page; page-break-before: always; }
+
+      /* IMPORTANTE: no print, não recorta */
+      .overflow-x-auto { overflow: visible !important; }
+      .print\:overflow-visible { overflow: visible !important; }
+
+      /* Mermaid ocupa a página sem ser cortado */
+      .mermaid svg { width: 100% !important; max-width: 100% !important; }
+    }
+
+    /* Em celular, diagrama pode ficar largo: manter scroll */
+    @media (max-width: 768px) {
+      .mermaid svg { min-width: 1000px; }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useRef, useState } = React;
+
+    function Icon({ name, size = 16, className = "" }) {
+      return (
+        <i
+          data-lucide={name}
+          className={className}
+          style={{ width: size + "px", height: size + "px" }}
+        />
+      );
+    }
+
+    function refreshLucide() {
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
+    function App() {
+      const macroRef = useRef(null);
+      const detailedRef = useRef(null);
+      const [isMermaidReady, setIsMermaidReady] = useState(false);
+
+      // Diagrama Macro - Visão de Valor (Sincronizado 2025)
+      const macroDiagram = `
+        graph LR
+          Start((Início)) --> D1[Sinalização TRUX D-1]
+          D1 --> S1[Planeamento e Janelas]
+          S1 --> S2[Emissão OC e Coleta]
+          S2 --> S3[Recebimento CD Barueri]
+          S3 --> S4[Emissão CT-e Barueri]
+          S4 --> S5[Roteirização Last Mile]
+          S5 --> S6[Entrega Final]
+          S6 --> G1{Sucesso?}
+          G1 -- Sim --> End((Faturamento))
+          G1 -- Não --> S3
+
+          style Start fill:#f8fafc,stroke:#0f172a
+          style End fill:#f8fafc,stroke:#0f172a
+          style D1 fill:#e0f2fe,stroke:#0ea5e9
+          style S3 fill:#f5f3ff,stroke:#8b5cf6
+          style S5 fill:#dcfce7,stroke:#22c55e
+      `;
+
+      // Diagrama Detalhado - BPMN 2.0 Completo e Validado
+      const detailedDiagram = `
+        graph TD
+          subgraph L1 ["L1 - SELLER"]
+            ST1((Pedido Pronto)) --> T1[Emitir NF-e]
+            T1 --> T1A[Sinalizar TRUX]
+          end
+
+          subgraph L2 ["L2 - TRUX / TORRE"]
+            T1A --> T2[Sinalizar Daylog D-1 <br/> NFs / Vols / Pesos]
+            T2 --> T3{Janela Definida?}
+            T3 -- Sim --> T4[Usar Janela Fixa]
+            T3 -- Não --> T5[Confirmar D-1 via Torre]
+            T4 --> T6[Contato Operacional Sistema]
+            T5 --> T6
+            T6 --> T7{Estratégico?}
+            T7 -- Sim --> T8[Grupo WhatsApp Ativado <br/> Seller+Daylog+Torre]
+            T7 -- Não --> T9[Fluxo Padrão]
+          end
+
+          subgraph L3 ["L3 - DAYLOG (FIRST MILE)"]
+            T8 --> T10[Emissão OC via TRUX FM]
+            T9 --> T10
+            T10 --> T11[Motorista recebe dados App]
+            T11 --> T12[Chegada no Seller]
+
+            subgraph Sub1 ["Subprocesso: Conferência App"]
+              T12 --> T13[Bipagem NFs e Volumes]
+              T13 --> T14[Validar Cubagem e Carga]
+            end
+
+            T14 --> G1{Divergência?}
+            G1 -- Não --> T15[Assinar Doc / Pegar Notas]
+            G1 -- Sim --> T16[Registrar RESSALVA na OC]
+
+            T16 --> G2{Doc Cliente?}
+            G2 -- Digital --> T17[OC Digital: Fotos + Obs]
+            G2 -- Físico --> T18[Protocolo: Ressalva Canhoto]
+
+            T15 --> T19[Status: COLETADO]
+            T17 --> T19
+            T18 --> T19
+
+            T19 --> T20[Transporte CD Barueri]
+          end
+
+          subgraph L4 ["L4 - UX CD BARUERI / FISCAL"]
+            T20 --> T21[Conferência Carga Base]
+            T21 --> T22[Emissão CT-e via TRUX <br/> Origem: Barueri]
+            T22 --> T23[Separação Rota / Transferência]
+            T23 --> T24[Alocar Motoristas D+1]
+            T24 --> T25[Carregamento via TRUX]
+            T25 --> T26[App Last Mile: Enviar Rotas]
+            T26 --> T27[Execução da Entrega]
+
+            T27 --> G3{Sucesso?}
+            G3 -- Não --> T28[Registrar Motivo App]
+            T28 --> T29[Retorno CD / Nova Rota]
+            T29 --> T24
+
+            G3 -- Sim --> T30[Baixa App / Comprovante]
+          end
+
+          subgraph L5 ["L5 - FINANCEIRO"]
+            T30 --> F1[Escaneamento Comprovantes]
+            F1 --> F2[Emissão Fatura + Nota Serviço]
+            F2 --> F3[Pagamento Semanal + 15]
+          end
+
+          classDef seller fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+          classDef trux fill:#eef2ff,stroke:#4f46e5,stroke-width:2px;
+          classDef daylog fill:#ecfdf5,stroke:#10b981,stroke-width:2px;
+          classDef ux fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px;
+          classDef finance fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
+
+          class ST1,T1,T1A seller;
+          class T2,T3,T4,T5,T6,T7,T8,T9 trux;
+          class T10,T11,T12,T13,T14,T15,T16,T17,T18,T19,T20 daylog;
+          class T21,T22,T23,T24,T25,T26,T27,T28,T29,T30 ux;
+          class F1,F2,F3 finance;
+
+          style T19 fill:#10b981,stroke:#064e3b,color:#fff,font-weight:bold
+          style T30 fill:#3b82f6,stroke:#1e3a8a,color:#fff,font-weight:bold
+          style T18 fill:#fef3c7,stroke:#92400e
+          style T17 fill:#fef3c7,stroke:#92400e
+          style T28 fill:#fee2e2,stroke:#991b1b,color:#000
+      `;
+
+      // Carrega Mermaid
+      useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+        script.async = true;
+        script.onload = () => {
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: 'neutral',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+          });
+          setIsMermaidReady(true);
+        };
+        document.body.appendChild(script);
+        refreshLucide();
+      }, []);
+
+      // Render Mermaid
+      useEffect(() => {
+        if (isMermaidReady && window.mermaid) {
+          const render = async () => {
+            try {
+              if (macroRef.current) macroRef.current.innerHTML = `<div class="mermaid">${macroDiagram}</div>`;
+              if (detailedRef.current) detailedRef.current.innerHTML = `<div class="mermaid">${detailedDiagram}</div>`;
+              await window.mermaid.run();
+            } catch (err) {
+              console.error("Erro na renderização dos diagramas:", err);
+            } finally {
+              refreshLucide();
+            }
+          };
+          render();
+        }
+      }, [isMermaidReady]);
+
+      useEffect(() => refreshLucide());
+
+      const onPrint = () => setTimeout(() => window.print(), 200);
+
+      return (
+        <div className="min-h-screen bg-slate-100 font-sans text-slate-900 overflow-x-hidden">
+          {/* Cabeçalho (não imprime) */}
+          <header className="bg-slate-900 text-white px-6 py-4 sticky top-0 z-50 no-print shadow-xl border-b border-white/10">
+            <div className="max-w-6xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-600 p-2 rounded-lg">
+                  <Icon name="zap" size={24} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-black leading-none uppercase tracking-tight">Manual Operacional UX Envios</h1>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Daylog x UX CD Barueri • V2.6 (2025)</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onPrint}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-black uppercase tracking-widest"
+                >
+                  <Icon name="printer" size={16} className="text-white" />
+                  Imprimir / Salvar PDF
+                </button>
+
+                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                  <Icon name="shield-check" size={16} className="text-blue-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Aprovado Operacional</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Corpo do Documento (IMPORTANTE: sem overflow-hidden para não cortar Mermaid) */}
+          <div className="max-w-6xl mx-auto bg-white shadow-2xl my-0 md:my-8 print:my-0 print:shadow-none min-h-screen border-t-[10px] border-blue-600 rounded-b-3xl overflow-x-hidden overflow-y-visible print:overflow-visible">
+            {/* Capa */}
+            <div className="p-10 md:p-16 bg-slate-50 relative overflow-hidden border-b border-slate-100 avoid-break">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-blue-100 rounded-full -mr-40 -mt-40 opacity-50 blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-100 rounded-full -ml-40 -mb-40 opacity-30 blur-3xl"></div>
+
+              <div className="flex justify-between items-start mb-12 relative z-10">
+                <div className="flex gap-4">
+                  <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-xl transform -rotate-2">
+                    <Icon name="truck" size={40} className="text-white" />
+                  </div>
+                  <div className="bg-blue-600 text-white p-5 rounded-2xl shadow-xl transform rotate-2">
+                    <Icon name="smartphone" size={40} className="text-white" />
+                  </div>
+                </div>
+                <div className="text-right text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest">
+                  SISTEMA DE QUALIDADE LOGÍSTICA <br />
+                  VALIDAÇÃO: DEZEMBRO 2025
+                </div>
+              </div>
+
+              <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight uppercase tracking-tighter italic">
+                Processo de Valor Integrado UX Envios
+              </h1>
+              <h2 className="text-2xl font-medium text-slate-500 max-w-3xl leading-relaxed">
+                Mapeamento detalhado da operação de First, Last e Middle mile para Sellers Oktohub e Carrefour.
+              </h2>
+            </div>
+
+            {/* Quadro de Regras */}
+            <div className="p-10 bg-white grid grid-cols-1 md:grid-cols-4 gap-8 border-b border-slate-100 avoid-break">
+              {[
+                { label: "Fiscal", text: "OC não gera facto fiscal.", icon: "shield-check", bg: "bg-blue-100", fg: "text-blue-600" },
+                { label: "Origem", text: "CT-e nasce em Barueri.", icon: "map-pin", bg: "bg-indigo-100", fg: "text-indigo-600" },
+                { label: "WhatsApp", text: "Sellers Estratégicos Ativos.", icon: "message-square", bg: "bg-emerald-100", fg: "text-emerald-600" },
+                { label: "Insucesso", text: "Retorno CD e Re-roteirização.", icon: "rotate-ccw", bg: "bg-amber-100", fg: "text-amber-600" },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <div className={`${item.bg} p-3 rounded-xl text-blue-600 h-fit`}>
+                    <Icon name={item.icon} size={24} className={item.fg} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">{item.label}</p>
+                    <p className="text-sm font-bold leading-tight">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* SEÇÃO: BPMN */}
+            <section className="p-10 md:p-16 page-break border-b border-slate-100">
+              <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-10 flex items-center gap-4 avoid-break">
+                <div className="h-10 w-2 bg-blue-600 rounded-full"></div>
+                01. Fluxogramas de Processo (Atualizado 2025)
+              </h3>
+
+              <div className="space-y-16">
+                {/* Macro: add overflow-x-auto para não cortar em telas menores */}
+                <div className="bg-slate-50 rounded-[2.5rem] border border-slate-100 p-6 md:p-10 shadow-inner flex justify-center items-center min-h-[300px] overflow-x-auto no-scrollbar avoid-break">
+                  <div ref={macroRef} className="w-full flex justify-center"></div>
+                </div>
+
+                {/* Detalhado: manter overflow-x-auto */}
+                <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12 shadow-xl overflow-x-auto no-scrollbar min-h-[600px]">
+                  <div ref={detailedRef} className="w-full"></div>
+                </div>
+              </div>
+            </section>
+
+            {/* Rodapé (não imprime) */}
+            <footer className="p-16 border-t border-slate-100 bg-white flex flex-col items-center gap-10 no-print">
+              <div className="flex items-center gap-6 opacity-30 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+                <Icon name="check-circle-2" size={48} className="text-emerald-600" />
+                <div className="h-12 w-[1px] bg-slate-900/20"></div>
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-[0.4em] mb-1">Qualidade Assegurada</h4>
+                  <p className="text-[10px] font-bold text-slate-900 uppercase tracking-widest italic leading-tight">
+                    Mapeamento Oficial UX Envios • Daylog & UX Barueri • 2025
+                  </p>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+    refreshLucide();
+  </script>
+</body>
+</html>
