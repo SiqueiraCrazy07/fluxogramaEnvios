@@ -1,0 +1,451 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { 
+  Truck, 
+  Activity, 
+  CreditCard, 
+  MapPin, 
+  Maximize2,
+  Info,
+  FileText,
+  Printer,
+  ChevronRight,
+  ClipboardCheck,
+  AlertTriangle,
+  Clock,
+  Package,
+  ShieldCheck,
+  FileSearch,
+  CheckCircle2,
+  MessageSquare,
+  Users,
+  Smartphone,
+  Zap,
+  ArrowRight,
+  Target,
+  BarChart3,
+  RotateCcw,
+  Receipt,
+  UserCheck,
+  Globe,
+  Database,
+  Search,
+  ShieldAlert,
+  Building2
+} from 'lucide-react';
+
+const App = () => {
+  const macroRef = useRef(null);
+  const detailedRef = useRef(null);
+  const [isMermaidReady, setIsMermaidReady] = useState(false);
+
+  // Diagrama Macro - Visão Geral UX Envios (Conforme Item 3 do Relatório)
+  const macroDiagram = `
+    graph LR
+      Start((Início)) --> P1[Pedido Pronto + NF-e]
+      P1 --> P2[Sinalização D-1 via TRUX]
+      P2 --> P3[Geração Ordem de Coleta]
+      P3 --> P4[Execução Coleta Daylog]
+      P4 --> P5[Transporte CD Barueri]
+      P5 --> P6[Recebimento e Conferência UX]
+      P6 --> P7[Emissão CT-e Barueri]
+      P7 --> P8{Separação}
+      P8 -- SP --> P9[Last Mile Daylog]
+      P8 -- Outros --> P10[Transferência Parceiro]
+      P9 --> End((Faturamento e Pagamento))
+      P10 --> End
+      
+      style Start fill:#f8fafc,stroke:#0f172a
+      style End fill:#f8fafc,stroke:#0f172a
+      style P1 fill:#e0f2fe,stroke:#0ea5e9
+      style P6 fill:#f5f3ff,stroke:#8b5cf6
+      style P7 fill:#dcfce7,stroke:#166534
+      style P8 fill:#fff,stroke:#64748b
+  `;
+
+  // Diagrama Detalhado - BPMN 2.0 UX Envios (Versão Final de Auditoria)
+  const detailedDiagram = `
+    graph TD
+      subgraph L1 ["L1 - SELLERS (OKTOHUB / CARREFOUR)"]
+        ST1((Pedido Pronto)) --> T1[Separação e Emissão NF-e]
+        T1 --> T1A[Sinalização via TRUX / EDI]
+      end
+
+      subgraph L2 ["L2 - TRUX / TORRE DE CONTROLE UX"]
+        T1A --> T2[Consolidação D-1]
+        T2 --> T3{Tipo Operação?}
+        T3 -- Recorrente --> T4[Janela Fixa / Veículo Dedicado]
+        T3 -- Esporádica --> T5[Confirmação Obrigatória D-1]
+        T4 --> T6[Cadastro/Pesquisa GR Motorista]
+        T5 --> T6
+        T6 --> T7{Aprovado?}
+        T7 -- Não --> T6
+        T7 -- Sim --> T8[Emissão Ordem de Coleta - OC]
+      end
+
+      subgraph L3 ["L3 - DAYLOG (FIRST MILE)"]
+        T8 --> T9[Apresentação OC Digital no Seller]
+        T9 --> T10[Conferência via App Daylog]
+        
+        subgraph Sub1 ["Subprocesso: Bipagem"]
+          T10 --> T11[Bipar NF-e + Volumes]
+          T11 --> T12[Validar Condição Carga]
+        end
+        
+        T12 --> G1{Divergência?}
+        G1 -- Sim --> T13[Registro de Ressalva + Fotos]
+        G1 -- Não --> T14[Status: COLETADO]
+        T13 --> T14
+        
+        T14 --> T15[Transferência Física CD Barueri]
+      end
+
+      subgraph L4 ["L4 - CD UX BARUERI (MIDDLE MILE / FISCAL)"]
+        T15 --> T16[Recebimento e Conferência Física UX]
+        T16 --> T17[Cruzamento Carga vs OC]
+        T17 --> G2{Conforme?}
+        G2 -- Não --> T18[Ocorrência e Bloqueio Faturamento]
+        G2 -- Sim --> T19[Emissão CT-e - Origem Barueri]
+        
+        T19 --> TAV[Averbação Seguro UX]
+        TAV --> T20{Destino Final?}
+        
+        T20 -- São Paulo --> T21[Roteirização Last Mile Daylog]
+        T20 -- Outros Estados --> T22[Transferência para Parceiro]
+        
+        T21 --> T23[Carregamento Operação UX]
+        T22 --> T24[Embarque Parceiro]
+      end
+
+      subgraph L5 ["L5 - EXECUÇÃO FINAL & INSUCESSO"]
+        T23 --> T25[Motorista recebe Rota App]
+        T25 --> T26[Entrega ao Destinatário]
+        
+        T26 --> G3{Sucesso?}
+        G3 -- Não --> T27[Motivo no App + Retorno CD]
+        T27 --> T16
+        
+        G3 -- Sim --> T28[Baixa: Foto + Assinatura]
+      end
+
+      subgraph L6 ["L6 - FINANCEIRO (ACERTO SEMANAL)"]
+        T14 -.-> F1[Pagamento Coleta: Base OC]
+        T28 -.-> F2[Pagamento Entrega: Base CT-e]
+        T24 -.-> F2
+      end
+
+      classDef seller fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+      classDef trux fill:#eef2ff,stroke:#4f46e5,stroke-width:2px;
+      classDef daylog fill:#ecfdf5,stroke:#10b981,stroke-width:2px;
+      classDef ux fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px;
+      classDef finance fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
+
+      class ST1,T1,T1A seller;
+      class T2,T3,T4,T5,T6,T7,T8 trux;
+      class T9,T10,T11,T12,T13,T14,T15 daylog;
+      class T16,T17,T18,T19,TAV,T20,T21,T22,T23,T24 ux;
+      class T25,T26,T27,T28 daylog;
+      class F1,F2 finance;
+
+      style T19 fill:#dbeafe,stroke:#1e40af,font-weight:bold
+      style TAV fill:#fef3c7,stroke:#92400e
+      style T18 fill:#fee2e2,stroke:#991b1b
+  `;
+
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js';
+    script.async = true;
+    script.onload = () => {
+      window.mermaid.initialize({
+        startOnLoad: false,
+        theme: 'neutral',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+      });
+      setIsMermaidReady(true);
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (isMermaidReady && window.mermaid) {
+      const render = async () => {
+        try {
+          if (macroRef.current) macroRef.current.innerHTML = `<div class="mermaid">${macroDiagram}</div>`;
+          if (detailedRef.current) detailedRef.current.innerHTML = `<div class="mermaid">${detailedDiagram}</div>`;
+          await window.mermaid.run();
+        } catch (err) {
+          console.error("Erro na renderização:", err);
+        }
+      };
+      render();
+    }
+  }, [isMermaidReady]);
+
+  return (
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 overflow-x-hidden">
+      {/* Header */}
+      <header className="bg-slate-900 text-white px-6 py-4 sticky top-0 z-50 no-print shadow-xl border-b border-white/10">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-600 p-2 rounded-lg text-white">
+              <Zap size={24} />
+            </div>
+            <div>
+              <h1 className="text-lg font-black leading-none uppercase tracking-tight">Manual de Operação UX Envios</h1>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Sincronia Daylog x UX CD Barueri • V2.9 (Validado 2025)</p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+            <Database size={16} className="text-blue-400" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 italic">Operação Escalável UX Envios</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Manual Body */}
+      <div className="max-w-6xl mx-auto bg-white shadow-2xl my-0 md:my-8 print:my-0 print:shadow-none min-h-screen border-t-[10px] border-blue-600 rounded-b-3xl overflow-hidden">
+        
+        {/* Capa de Apresentação */}
+        <div className="p-10 md:p-16 bg-slate-50 relative overflow-hidden border-b border-slate-100 text-center md:text-left">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-100 rounded-full -mr-40 -mt-40 opacity-50 blur-3xl"></div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-start mb-12 relative z-10 gap-6">
+            <div className="flex gap-4">
+              <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-xl transform -rotate-2">
+                <Truck size={40} />
+              </div>
+              <div className="bg-blue-600 text-white p-5 rounded-2xl shadow-xl rotate-2">
+                <ShieldCheck size={40} />
+              </div>
+            </div>
+            <div className="text-center md:text-right text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest">
+              SISTEMA DE QUALIDADE LOGÍSTICA <br />
+              VALIDAÇÃO FINAL: DEZEMBRO 2025
+            </div>
+          </div>
+          <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight uppercase tracking-tighter italic">Processo de Valor Integrado UX Envios</h1>
+          <h2 className="text-2xl font-medium text-slate-500 max-w-4xl leading-relaxed mx-auto md:mx-0">
+             First, Last e Middle Mile para Sellers Oktohub e Carrefour. Mapeamento auditável e escalável.
+          </h2>
+        </div>
+
+        {/* Quadro de Princípios-Chave */}
+        <div className="p-10 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 border-b border-slate-100">
+           {[
+             {icon: <FileSearch className="text-amber-600"/>, title: "Ordem de Coleta", desc: "Documento 100% operacional. Sem efeito fiscal ou averbação."},
+             {icon: <ShieldCheck className="text-blue-600"/>, title: "Seguro UX", desc: "Averbação ocorre exclusivamente após emissão do CT-e."},
+             {icon: <MapPin className="text-indigo-600"/>, title: "Barueri Única", desc: "Origem fiscal do CT-e sempre em Barueri. Evita bitributação."},
+             {icon: <CreditCard className="text-emerald-600"/>, title: "Pagamento", desc: "Fluxos de Coleta e Entrega independentes para Daylog."}
+           ].map((item, idx) => (
+             <div key={idx} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="p-3 bg-white rounded-xl shadow-sm h-fit">{item.icon}</div>
+                <div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase mb-1">{item.title}</p>
+                   <p className="text-xs font-bold leading-tight text-slate-700">{item.desc}</p>
+                </div>
+             </div>
+           ))}
+        </div>
+
+        {/* SEÇÃO 1: BPMN */}
+        <section className="p-10 md:p-16 page-break border-b border-slate-100">
+          <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-10 flex items-center gap-4">
+             <div className="h-10 w-2 bg-blue-600 rounded-full"></div> 01. Fluxogramas de Operação UX Envios
+          </h3>
+          <div className="space-y-16">
+            <div className="bg-slate-50 rounded-[2.5rem] border border-slate-100 p-10 shadow-inner flex justify-center items-center min-h-[350px]">
+              <div ref={macroRef} className="w-full flex justify-center scale-100"></div>
+            </div>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12 shadow-xl overflow-x-auto min-h-[800px]">
+              <div ref={detailedRef} className="w-full"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* SEÇÃO 2: MEMORIAL DESCRITIVO COMPLETO */}
+        <section className="p-10 md:p-16 page-break">
+          <h3 className="text-3xl font-black text-slate-800 uppercase tracking-tighter mb-16 flex items-center gap-4">
+             <div className="h-10 w-2 bg-emerald-600 rounded-full"></div> 02. Memorial Descritivo de Operação
+          </h3>
+
+          <div className="space-y-20">
+            
+            {/* ETAPA 1 & 2 */}
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="w-24 h-24 bg-gradient-to-br from-indigo-800 to-indigo-950 text-white rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-2xl">
+                <Clock size={40} />
+              </div>
+              <div className="flex-1 space-y-6 text-slate-600 font-medium">
+                <h4 className="text-2xl font-black text-slate-900 uppercase border-b-2 border-slate-100 pb-2">01. Pedido & Planejamento D-1</h4>
+                <p className="text-sm leading-relaxed italic border-l-4 border-blue-500 pl-4">"Garantir que os sellers sinalizem apenas pedidos realmente prontos para coleta."</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                   <div className="space-y-2">
+                      <p><strong>Seller:</strong> Separa o pedido, emite NF-e de venda e sinaliza via integração (EDI/TRUX).</p>
+                      <p><strong>Torre UX:</strong> Consolida NFs, volumes e peso. Valida a disponibilidade real antes de agendar.</p>
+                   </div>
+                   <div className="bg-slate-900 text-white p-6 rounded-3xl relative overflow-hidden">
+                      <h5 className="text-[10px] font-black uppercase text-blue-400 mb-3 tracking-widest">Gestão de Janelas</h5>
+                      <p className="text-xs leading-relaxed opacity-80">Recorrentes: Janela fixa e veículo dedicado. Esporádicas: Confirmação obrigatória via Torre no D-1.</p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ETAPA 3, 4 & 5 */}
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-2xl">
+                <UserCheck size={40} />
+              </div>
+              <div className="flex-1 space-y-8">
+                <h4 className="text-2xl font-black text-slate-900 uppercase border-b-2 border-slate-100 pb-2">02. Cadastro, Risco & Execução Coleta</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                   <div className="space-y-4">
+                      <h5 className="text-xs font-black uppercase text-amber-600">Compliance de Risco (GR)</h5>
+                      <p className="text-sm text-slate-600 leading-relaxed font-semibold underline">Apenas motoristas cadastrados e com pesquisa aprovada no Gerenciador de Risco podem operar.</p>
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                         <p className="text-[11px] font-bold text-slate-500 uppercase">Ordem de Coleta (OC):</p>
+                         <p className="text-xs italic">Puramente operacional. Não gera imposto, averbação ou CT-e.</p>
+                      </div>
+                   </div>
+                   <div className="bg-white p-6 rounded-3xl border-2 border-emerald-100 space-y-4 shadow-sm">
+                      <h5 className="text-xs font-black uppercase text-emerald-600 flex items-center gap-2"><Smartphone size={16}/> Rito no Seller</h5>
+                      <ul className="text-xs space-y-2 text-slate-700 font-bold">
+                        <li className="flex gap-2">→ Bipagem obrigatória de volumes/NF-e.</li>
+                        <li className="flex gap-2">→ Verificação de integridade física.</li>
+                        <li className="flex gap-2 text-amber-600">→ Ressalvas com fotos em caso de avaria.</li>
+                      </ul>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ETAPA 6, 7 & 8 */}
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="w-24 h-24 bg-gradient-to-br from-violet-600 to-indigo-900 text-white rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-2xl">
+                <Building2 size={40} />
+              </div>
+              <div className="flex-1 space-y-8">
+                <h4 className="text-2xl font-black text-slate-900 uppercase border-b-2 border-slate-100 pb-2">03. Middle Mile: Fronteira Fiscal CD Barueri</h4>
+                <div className="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl space-y-8 border-l-[12px] border-blue-600">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-sm leading-relaxed">
+                      <div className="space-y-4">
+                         <h5 className="text-[11px] font-black uppercase text-blue-400 tracking-[0.3em] border-b border-white/10 pb-2">Recebimento & ZA</h5>
+                         <p className="opacity-90 font-medium italic">Cruzamento físico da carga recebida vs Ordem de Coleta. Divergências aqui bloqueiam o faturamento e geram ocorrências de auditoria.</p>
+                      </div>
+                      <div className="space-y-4">
+                         <h5 className="text-[11px] font-black uppercase text-emerald-400 tracking-[0.3em] border-b border-white/10 pb-2">Emissão de CT-e & Seguro</h5>
+                         <p className="opacity-90 font-medium">O seguro e a responsabilidade fiscal do transporte iniciam-se exclusivamente na emissão do CT-e.</p>
+                      </div>
+                   </div>
+                   <div className="bg-white/5 p-8 rounded-3xl border border-white/10">
+                      <p className="text-base font-black text-white italic tracking-tight leading-relaxed text-center">
+                        REGRA DE OURO: Origem do CT-e sempre Barueri. Nunca utilizar endereço do Seller para evitar bitributação e duplicidade de GRIS.
+                      </p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ETAPA 9, 10 & 11 */}
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-2xl">
+                <Target size={40} />
+              </div>
+              <div className="flex-1 space-y-8 text-slate-600 font-medium">
+                <h4 className="text-2xl font-black text-slate-900 uppercase border-b-2 border-slate-100 pb-2">04. Last Mile: Expedição, Entrega & Insucessos</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                   <div className="space-y-4">
+                      <p className="text-sm font-bold text-slate-800">Cenários de Distribuição:</p>
+                      <ul className="text-xs space-y-3">
+                         <li className="flex items-start gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <ArrowRight size={14} className="mt-1 text-blue-500"/>
+                            <span><strong>Entregas SP:</strong> Last Mile executado pela Daylog. Baixa no App com Foto + Assinatura + Comprovante.</span>
+                         </li>
+                         <li className="flex items-start gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <ArrowRight size={14} className="mt-1 text-indigo-500"/>
+                            <span><strong>Fora de SP:</strong> Transferência para parceiro UX. Seguimento da entrega pelo parceiro.</span>
+                         </li>
+                      </ul>
+                   </div>
+                   <div className="p-8 bg-red-50 rounded-[2rem] border border-red-100 space-y-4 shadow-sm relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-3 opacity-10"><RotateCcw size={40}/></div>
+                      <h5 className="text-[11px] font-black text-red-600 uppercase flex items-center gap-2 tracking-widest">Item 12: Insucessos</h5>
+                      <p className="text-[12px] text-red-900 font-bold leading-relaxed italic uppercase tracking-tighter">
+                        Registro imediato do motivo no App → Retorno Físico ao CD UX → Nova Roteirização ou tratativa com cliente final.
+                      </p>
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ETAPA 12: FINANCEIRO */}
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-2xl">
+                <Receipt size={40} />
+              </div>
+              <div className="flex-1 space-y-8">
+                <h4 className="text-2xl font-black text-slate-900 uppercase border-b-2 border-slate-100 pb-2">05. Governança Financeira (Item 13)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-black uppercase text-[10px]">
+                  <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-50 shadow-lg relative overflow-hidden">
+                     <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                     <p className="text-blue-600 mb-2 tracking-[0.2em]">Pagamento Coleta (First Mile)</p>
+                     <p className="text-2xl text-slate-800 tracking-tighter leading-none">Semanal</p>
+                     <p className="mt-4 text-[11px] text-slate-400 normal-case font-medium leading-relaxed italic tracking-tighter">Gatilho: OC Concluída + Entrada no CD Barueri. Consolidação exclusiva UX → Daylog.</p>
+                  </div>
+                  <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-50 shadow-lg relative overflow-hidden">
+                     <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+                     <p className="text-emerald-600 mb-2 tracking-[0.2em]">Pagamento Entrega (Last Mile)</p>
+                     <p className="text-2xl text-slate-800 tracking-tighter leading-none">Semanal / Acordado</p>
+                     <p className="mt-4 text-[11px] text-slate-400 normal-case font-medium leading-relaxed italic tracking-tighter">Gatilho: CT-e Emitido + Entrega concluída. Sem duplicidade de impostos, seguros ou GRIS.</p>
+                  </div>
+                </div>
+                <div className="bg-slate-900 text-white p-6 rounded-3xl text-center">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-1">Nota de Governança</p>
+                   <p className="text-xs font-bold leading-relaxed italic">"Não há pagamento direto a motoristas pela UX. TRUX é a fonte única da verdade operacional."</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Rodapé Corporativo Final */}
+        <footer className="p-16 border-t border-slate-100 bg-white flex flex-col items-center gap-12 no-print">
+          <div className="flex items-center gap-6 opacity-30 grayscale transition-all">
+            <CheckCircle2 size={56} className="text-emerald-600" />
+            <div className="h-16 w-[1px] bg-slate-900/20"></div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-[0.5em] mb-2 text-slate-900">Documento de Onboarding UX Envios</h4>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic leading-tight">Mapeamento Oficial • Sincronia de Seguros & Fiscal • Dezembro 2025</p>
+            </div>
+          </div>
+        </footer>
+      </div>
+
+      <style>{`
+        .mermaid { display: flex; justify-content: center; width: 100%; transition: opacity 0.8s ease-in; }
+        .mermaid svg { max-width: 100% !important; height: auto !important; }
+        
+        @media print {
+          body { background-color: white !important; -webkit-print-color-adjust: exact; }
+          .no-print { display: none !important; }
+          .page-break { page-break-before: always; padding-top: 4rem; }
+          .max-w-6xl { max-width: 100% !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; border-top: none !important; }
+          .mermaid svg { width: 100% !important; }
+          h1, h2, h3, h4, p, span, li, strong { color: black !important; }
+          .bg-slate-900 { background-color: #0f172a !important; color: white !important; }
+          .bg-slate-50 { background-color: #f8fafc !important; }
+          .bg-indigo-50 { background-color: #eef2ff !important; }
+          .bg-amber-50 { background-color: #fffbeb !important; }
+          .bg-red-50 { background-color: #fef2f2 !important; }
+        }
+
+        @page { size: A4 portrait; margin: 1cm; }
+        @media (max-width: 768px) { .mermaid svg { min-width: 1000px; } }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
