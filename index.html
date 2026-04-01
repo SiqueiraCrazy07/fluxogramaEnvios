@@ -1,677 +1,763 @@
-import React, { useState } from 'react';
-import { 
-    Truck, Package, ShoppingCart, Server, ArrowDown, CheckCircle, 
-    Database, RefreshCw, FileText, Target, Layers, Box, Anchor, 
-    Info, X, ArrowLeft, PanelLeft, Zap, TrendingUp, BarChart, 
-    Globe, ShieldCheck, Moon, Sun, Layout, Users, Send, Activity, FastForward,
-    CalendarClock, Rocket, DollarSign, Settings, Bell, Hash, Clock, Mail, MessageCircle, AlertTriangle, FileSignature
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrefour Envios - Operação Leve</title>
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    
+    <!-- React & ReactDOM (via CDN) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para compilar o JSX no navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// --- COMPONENTE LOGO UX ---
-const LogoUX = ({ className }) => (
-    <svg 
-        viewBox="0 0 280 100" 
-        className={className} 
-        fill="currentColor" 
-        xmlns="http://www.w3.org/2000/svg" 
-        aria-label="Logo UX"
-        preserveAspectRatio="xMidYMid meet"
-    >
-        <path d="M0 0 L38 0 L38 62 C38 80 46 84 55 84 C64 84 72 80 72 62 L72 0 L110 0 L110 62 C110 94 85 100 55 100 C25 100 0 94 0 62 Z" />
-        <path d="M125 0 L165 0 L180 30 L195 0 L235 0 L200 50 L240 100 L200 100 L180 70 L160 100 L120 100 L160 50 Z" />
-        <rect x="245" y="70" width="30" height="30" />
-    </svg>
-);
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        @keyframes flow { to { stroke-dashoffset: -20; } }
+        .animate-flow { animation: flow 1s linear infinite; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="root"></div>
 
-// --- CORES BASE DOS NÓS (CLARO / ESCURO) ---
-const COLORS = {
-    transfer: "bg-blue-50 dark:bg-blue-900/20 border-blue-600 dark:border-blue-400 text-blue-900 dark:text-blue-100 shadow-blue-100 dark:shadow-none",
-    sale: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-600 dark:border-emerald-400 text-emerald-900 dark:text-emerald-100 shadow-emerald-100 dark:shadow-none",
-    system: "bg-slate-50 dark:bg-slate-800 border-slate-600 dark:border-slate-500 text-slate-900 dark:text-slate-100 shadow-slate-200 dark:shadow-none",
-    control: "bg-amber-50 dark:bg-amber-900/20 border-amber-500 dark:border-amber-400 text-amber-900 dark:text-amber-100 shadow-amber-100 dark:shadow-none"
-};
+    <script type="text/babel">
+        const { useState } = React;
 
-// --- COMPONENTE DO NÓ ---
-const Node = ({ data, onClick, isSelected }) => {
-    const Icon = data.icon;
-    let styleClass = COLORS.system;
-    if (data.type === 'transfer') styleClass = COLORS.transfer;
-    if (data.type === 'sale') styleClass = COLORS.sale;
-    if (data.type === 'control') styleClass = COLORS.control;
+        // --- ÍCONES SVG INLINE (Substitui o lucide-react para funcionar sem build tools) ---
+        const Icon = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
 
-    return (
-        <div 
-            onClick={(e) => {
-                e.stopPropagation(); 
-                onClick(data);
-            }}
-            className={`
-                absolute transform -translate-x-1/2 -translate-y-1/2 
-                w-52 p-4 rounded-xl border-l-4 shadow-lg cursor-pointer transition-all duration-300
-                hover:shadow-2xl hover:-translate-y-1/2 hover:scale-105 z-10 bg-white dark:bg-slate-800
-                ${styleClass.replace(/bg-\w+-50/g, '').replace(/dark:bg-\w+-900\/20/g, '')} 
-                ${isSelected ? 'ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-indigo-500 scale-105' : ''}
-            `}
-            style={{ left: data.x, top: data.y }}
-        >
-            <div className="flex items-center gap-3 mb-2">
-                <div className={`p-2 rounded-lg bg-opacity-10 dark:bg-opacity-20 ${styleClass.split(' ')[0]}`}>
-                    <Icon size={20} className={styleClass.includes('transfer') ? 'text-blue-600 dark:text-blue-400' : styleClass.includes('sale') ? 'text-emerald-600 dark:text-emerald-400' : styleClass.includes('control') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'} />
+        const ShoppingCart = p => <Icon {...p}><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></Icon>;
+        const FileText = p => <Icon {...p}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></Icon>;
+        const Package = p => <Icon {...p}><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></Icon>;
+        const Truck = p => <Icon {...p}><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></Icon>;
+        const Target = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+        const Activity = p => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+        const RefreshCw = p => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+        const Send = p => <Icon {...p}><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></Icon>;
+        const CheckCircle = p => <Icon {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></Icon>;
+        const FastForward = p => <Icon {...p}><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></Icon>;
+        const Rocket = p => <Icon {...p}><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></Icon>;
+        const DollarSign = p => <Icon {...p}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></Icon>;
+        const Settings = p => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
+        const Bell = p => <Icon {...p}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></Icon>;
+        const ShieldCheck = p => <Icon {...p}><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2-1 4-2 7-2 2.5 0 4.5 1 7 2a1 1 0 0 1 1 1v7z"/><path d="m9 12 2 2 4-4"/></Icon>;
+        const TrendingUp = p => <Icon {...p}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></Icon>;
+        const AlertTriangle = p => <Icon {...p}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></Icon>;
+        const CalendarClock = p => <Icon {...p}><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/></Icon>;
+        const Mail = p => <Icon {...p}><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></Icon>;
+        const MessageCircle = p => <Icon {...p}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></Icon>;
+        const Clock = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
+        const Globe = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></Icon>;
+        const Anchor = p => <Icon {...p}><circle cx="12" cy="5" r="3"/><line x1="12" x2="12" y1="22" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></Icon>;
+        const Layout = p => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></Icon>;
+        const Users = p => <Icon {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+        const Sun = p => <Icon {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></Icon>;
+        const Moon = p => <Icon {...p}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></Icon>;
+        const ArrowLeft = p => <Icon {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Icon>;
+        const X = p => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+        const Info = p => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></Icon>;
+        const PanelLeft = p => <Icon {...p}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/></Icon>;
+        const ArrowDown = p => <Icon {...p}><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></Icon>;
+        const Layers = p => <Icon {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></Icon>;
+        const Box = p => <Icon {...p}><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></Icon>;
+        const Database = p => <Icon {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></Icon>;
+        const Zap = p => <Icon {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></Icon>;
+        const BarChart = p => <Icon {...p}><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></Icon>;
+        const Hash = p => <Icon {...p}><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></Icon>;
+        const Server = p => <Icon {...p}><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></Icon>;
+
+
+        // --- COMPONENTE LOGO UX ---
+        const LogoUX = ({ className }) => (
+            <svg 
+                viewBox="0 0 280 100" 
+                className={className} 
+                fill="currentColor" 
+                xmlns="http://www.w3.org/2000/svg" 
+                aria-label="Logo UX"
+                preserveAspectRatio="xMidYMid meet"
+            >
+                <path d="M0 0 L38 0 L38 62 C38 80 46 84 55 84 C64 84 72 80 72 62 L72 0 L110 0 L110 62 C110 94 85 100 55 100 C25 100 0 94 0 62 Z" />
+                <path d="M125 0 L165 0 L180 30 L195 0 L235 0 L200 50 L240 100 L200 100 L180 70 L160 100 L120 100 L160 50 Z" />
+                <rect x="245" y="70" width="30" height="30" />
+            </svg>
+        );
+
+        // --- CORES BASE DOS NÓS (CLARO / ESCURO) ---
+        const COLORS = {
+            transfer: "bg-blue-50 dark:bg-blue-900/20 border-blue-600 dark:border-blue-400 text-blue-900 dark:text-blue-100 shadow-blue-100 dark:shadow-none",
+            sale: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-600 dark:border-emerald-400 text-emerald-900 dark:text-emerald-100 shadow-emerald-100 dark:shadow-none",
+            system: "bg-slate-50 dark:bg-slate-800 border-slate-600 dark:border-slate-500 text-slate-900 dark:text-slate-100 shadow-slate-200 dark:shadow-none",
+            control: "bg-amber-50 dark:bg-amber-900/20 border-amber-500 dark:border-amber-400 text-amber-900 dark:text-amber-100 shadow-amber-100 dark:shadow-none"
+        };
+
+        // --- COMPONENTE DO NÓ ---
+        const Node = ({ data, onClick, isSelected }) => {
+            const IconComponent = data.icon;
+            let styleClass = COLORS.system;
+            if (data.type === 'transfer') styleClass = COLORS.transfer;
+            if (data.type === 'sale') styleClass = COLORS.sale;
+            if (data.type === 'control') styleClass = COLORS.control;
+
+            return (
+                <div 
+                    onClick={(e) => {
+                        e.stopPropagation(); 
+                        onClick(data);
+                    }}
+                    className={`
+                        absolute transform -translate-x-1/2 -translate-y-1/2 
+                        w-52 p-4 rounded-xl border-l-4 shadow-lg cursor-pointer transition-all duration-300
+                        hover:shadow-2xl hover:-translate-y-1/2 hover:scale-105 z-10 bg-white dark:bg-slate-800
+                        ${styleClass.replace(/bg-\w+-50/g, '').replace(/dark:bg-\w+-900\/20/g, '')} 
+                        ${isSelected ? 'ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-indigo-500 scale-105' : ''}
+                    `}
+                    style={{ left: data.x, top: data.y }}
+                >
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 rounded-lg bg-opacity-10 dark:bg-opacity-20 ${styleClass.split(' ')[0]}`}>
+                            <IconComponent size={20} className={styleClass.includes('transfer') ? 'text-blue-600 dark:text-blue-400' : styleClass.includes('sale') ? 'text-emerald-600 dark:text-emerald-400' : styleClass.includes('control') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'} />
+                        </div>
+                        <span className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">{data.label}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">{data.shortDesc}</p>
+                    
+                    {data.system && (
+                        <div className="absolute -top-3 -right-2 shadow-sm bg-slate-800 dark:bg-slate-700 text-white text-[10px] font-mono px-2 py-1 rounded-md border border-slate-600 dark:border-slate-500">
+                            {data.system}
+                        </div>
+                    )}
                 </div>
-                <span className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-200">{data.label}</span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">{data.shortDesc}</p>
-            
-            {data.system && (
-                <div className="absolute -top-3 -right-2 shadow-sm bg-slate-800 dark:bg-slate-700 text-white text-[10px] font-mono px-2 py-1 rounded-md border border-slate-600 dark:border-slate-500">
-                    {data.system}
-                </div>
-            )}
-        </div>
-    );
-};
+            );
+        };
 
-// --- COMPONENTE DAS CONEXÕES ---
-const Connection = ({ start, end, label, type, isDarkMode }) => {
-    const isSecondary = type === 'secondary' || type === 'side';
-    const isSide = type === 'side';
-    const strokeColor = isSecondary 
-        ? (isDarkMode ? '#475569' : '#cbd5e1') 
-        : (isDarkMode ? '#94a3b8' : '#64748b');
+        // --- COMPONENTE DAS CONEXÕES ---
+        const Connection = ({ start, end, label, type, isDarkMode }) => {
+            const isSecondary = type === 'secondary' || type === 'side';
+            const isSide = type === 'side';
+            const strokeColor = isSecondary 
+                ? (isDarkMode ? '#475569' : '#cbd5e1') 
+                : (isDarkMode ? '#94a3b8' : '#64748b');
 
-    let path, arrowPath, textPos;
+            let path, arrowPath, textPos;
 
-    if (isSide) {
-        // Conexão Horizontal
-        const startX = start.x + 104; // 104 = metade da largura do nó (w-52 = 208px)
-        const endX = end.x - 104;
-        const midX = (startX + endX) / 2;
-        path = `M ${startX} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${endX} ${end.y}`;
-        arrowPath = `M ${endX} ${end.y} L ${endX - 10} ${end.y - 5} L ${endX - 10} ${end.y + 5} Z`;
-        textPos = { x: midX, y: start.y - 12 };
-    } else {
-        // Conexão Vertical Padrão
-        const startY = start.y + 50; // Ajuste para sair da base do nó
-        const endY = end.y - 50;     // Ajuste para entrar no topo do nó
-        const midY = (startY + endY) / 2;
-        path = `M ${start.x} ${startY} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${endY}`;
-        arrowPath = `M ${end.x} ${endY} L ${end.x - 5} ${endY - 10} L ${end.x + 5} ${endY - 10} Z`;
-        textPos = { x: (start.x + end.x) / 2, y: midY + 4 };
-    }
+            if (isSide) {
+                // Conexão Horizontal
+                const startX = start.x + 104; 
+                const endX = end.x - 104;
+                const midX = (startX + endX) / 2;
+                path = `M ${startX} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${endX} ${end.y}`;
+                arrowPath = `M ${endX} ${end.y} L ${endX - 10} ${end.y - 5} L ${endX - 10} ${end.y + 5} Z`;
+                textPos = { x: midX, y: start.y - 12 };
+            } else {
+                // Conexão Vertical Padrão
+                const startY = start.y + 50; 
+                const endY = end.y - 50;     
+                const midY = (startY + endY) / 2;
+                path = `M ${start.x} ${startY} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${endY}`;
+                arrowPath = `M ${end.x} ${endY} L ${end.x - 5} ${endY - 10} L ${end.x + 5} ${endY - 10} Z`;
+                textPos = { x: (start.x + end.x) / 2, y: midY + 4 };
+            }
 
-    return (
-        <g>
-            <path d={path} fill="none" stroke={strokeColor} strokeWidth={isSecondary ? "2" : "3"} />
-            
-            {!isSecondary && (
-                <path 
-                    d={path} 
-                    fill="none" 
-                    stroke={type === 'sale' ? (isDarkMode ? '#34d399' : '#10b981') : (isDarkMode ? '#60a5fa' : '#3b82f6')} 
-                    strokeWidth="2" 
-                    strokeDasharray="5,5" 
-                    className="animate-flow opacity-60"
-                />
-            )}
-
-            <path d={arrowPath} fill={strokeColor} />
-
-            {label && (
+            return (
                 <g>
-                    <rect 
-                        x={textPos.x - 45} 
-                        y={textPos.y - 12} 
-                        width="90" height="24" rx="12" 
-                        fill={isDarkMode ? '#1e293b' : 'white'} 
-                        stroke={isDarkMode ? '#334155' : '#e2e8f0'} 
-                        className="shadow-sm"
-                    />
-                    <text 
-                        x={textPos.x} 
-                        y={textPos.y + 4} 
-                        textAnchor="middle" 
-                        className="text-[10px] fill-slate-600 dark:fill-slate-300 font-bold uppercase tracking-tight"
-                    >
-                        {label}
-                    </text>
+                    <path d={path} fill="none" stroke={strokeColor} strokeWidth={isSecondary ? "2" : "3"} />
+                    
+                    {!isSecondary && (
+                        <path 
+                            d={path} 
+                            fill="none" 
+                            stroke={type === 'sale' ? (isDarkMode ? '#34d399' : '#10b981') : (isDarkMode ? '#60a5fa' : '#3b82f6')} 
+                            strokeWidth="2" 
+                            strokeDasharray="5,5" 
+                            className="animate-flow opacity-60"
+                        />
+                    )}
+
+                    <path d={arrowPath} fill={strokeColor} />
+
+                    {label && (
+                        <g>
+                            <rect 
+                                x={textPos.x - 45} 
+                                y={textPos.y - 12} 
+                                width="90" height="24" rx="12" 
+                                fill={isDarkMode ? '#1e293b' : 'white'} 
+                                stroke={isDarkMode ? '#334155' : '#e2e8f0'} 
+                                className="shadow-sm"
+                            />
+                            <text 
+                                x={textPos.x} 
+                                y={textPos.y + 4} 
+                                textAnchor="middle" 
+                                className="text-[10px] fill-slate-600 dark:fill-slate-300 font-bold uppercase tracking-tight"
+                            >
+                                {label}
+                            </text>
+                        </g>
+                    )}
                 </g>
-            )}
-        </g>
-    );
-};
+            );
+        };
 
-// --- VISAO COMERCIAL ---
-const SellerPresentation = () => (
-    <div className="w-full h-full overflow-y-auto bg-slate-50 dark:bg-slate-900 font-sans scrollbar-hide transition-colors duration-300">
-        <div className="bg-white dark:bg-slate-900 min-h-screen pb-20">
-            {/* Header / Hero */}
-            <div className="bg-slate-900 dark:bg-slate-950 text-white pt-20 pb-24 px-6 md:px-12 relative overflow-hidden transition-colors duration-300">
-                <div className="relative z-10 max-w-5xl mx-auto mt-8">
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="font-bold text-white text-xl tracking-tight">Carrefour</span>
-                        <span className="bg-sky-500 text-slate-900 px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm">Logística Expressa</span>
-                    </div>
-                    <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight leading-tight">
-                        ENVIOS <span className="text-sky-500">LEVE</span>
-                    </h1>
-                    <p className="text-xl text-slate-300 font-light max-w-2xl leading-relaxed border-l-4 border-sky-500 pl-4">
-                        Fluxo Ágil, Triagem Inteligente & Distribuição Pulverizada. <br/>
-                        <span className="text-base text-slate-400 mt-2 block">
-                            Modelo desenhado para alta volumetria de pequenos pacotes, assegurando janelas de coleta previsíveis e SLAs competitivos (Same Day / Next Day).
-                        </span>
-                    </p>
-                </div>
-                <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-slate-800 dark:from-black/50 to-transparent opacity-50 pointer-events-none"></div>
-                <div className="absolute -right-10 bottom-10 text-slate-800 dark:text-slate-800/50 opacity-20 transform rotate-12 pointer-events-none">
-                    <FastForward size={400} />
-                </div>
-            </div>
-
-            {/* Vantagens para Sellers */}
-            <div className="px-6 md:px-12 -mt-10 relative z-20 mb-20 max-w-6xl mx-auto">
-                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 md:p-12 border border-slate-100 dark:border-slate-700 transition-colors duration-300">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Vantagens para Sellers</h2>
-                        <p className="text-slate-600 dark:text-slate-400">Por que escolher o modelo Envios Leve para o seu negócio?</p>
+        // --- VISAO COMERCIAL ---
+        const SellerPresentation = () => (
+            <div className="w-full h-full overflow-y-auto bg-slate-50 dark:bg-slate-900 font-sans scrollbar-hide transition-colors duration-300">
+                <div className="bg-white dark:bg-slate-900 min-h-screen pb-20">
+                    {/* Header / Hero */}
+                    <div className="bg-slate-900 dark:bg-slate-950 text-white pt-20 pb-24 px-6 md:px-12 relative overflow-hidden transition-colors duration-300">
+                        <div className="relative z-10 max-w-5xl mx-auto mt-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <span className="font-bold text-white text-xl tracking-tight">Carrefour</span>
+                                <span className="bg-sky-500 text-slate-900 px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm">Logística Expressa</span>
+                            </div>
+                            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight leading-tight">
+                                ENVIOS <span className="text-sky-500">LEVE</span>
+                            </h1>
+                            <p className="text-xl text-slate-300 font-light max-w-2xl leading-relaxed border-l-4 border-sky-500 pl-4">
+                                Fluxo Ágil, Triagem Inteligente & Distribuição Pulverizada. <br/>
+                                <span className="text-base text-slate-400 mt-2 block">
+                                    Modelo desenhado para alta volumetria de pequenos pacotes, assegurando janelas de coleta previsíveis e SLAs competitivos (Same Day / Next Day).
+                                </span>
+                            </p>
+                        </div>
+                        <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-slate-800 dark:from-black/50 to-transparent opacity-50 pointer-events-none"></div>
+                        <div className="absolute -right-10 bottom-10 text-slate-800 dark:text-slate-800/50 opacity-20 transform rotate-12 pointer-events-none">
+                            <FastForward size={400} />
+                        </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            { icon: Rocket, color: "sky", title: "Mais Vendas e Conversão", items: ["Frete competitivo e prazos mais curtos aumentam a conversão.", "Destaque na vitrine do Carrefour com selo de entrega rápida."] },
-                            { icon: DollarSign, color: "emerald", title: "Redução de Custos", items: ["Tarifas menores em relação aos Correios.", "Sem cobrança adicional de taxa de coleta ou gestão de transporte."] },
-                            { icon: Settings, color: "indigo", title: "Gestão Automatizada", items: ["Etiqueta e romaneio enviados automaticamente por e-mail.", "Integração direta com Mirakl sem upload manual de informações."] },
-                            { icon: Bell, color: "amber", title: "Acompanhamento Real-Time", items: ["Status de entrega e coleta atualizados automaticamente na Mirakl.", "Transparência total entre Seller, UX Group e Carrefour."] },
-                            { icon: ShieldCheck, color: "blue", title: "Segurança e Suporte", items: ["Canal direto de atendimento e Grupo de WhatsApp opcional.", "Suporte UX e Carrefour acompanhando o processo ponta a ponta."] },
-                            { icon: TrendingUp, color: "purple", title: "Crescimento Sustentável", items: ["Operação estruturada para escalar com novos volumes.", "Participação em projeto estratégico que melhora performance."] }
-                        ].map((v, i) => {
-                            const Icon = v.icon;
-                            return (
-                                <div key={i} className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl border-t-4 hover:shadow-md transition-all" style={{ borderTopColor: `var(--tw-colors-${v.color}-500)` }}>
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className={`p-2 rounded-lg bg-${v.color}-100 dark:bg-${v.color}-900/30 text-${v.color}-600 dark:text-${v.color}-400`}>
-                                            <Icon size={24} />
+                    {/* Vantagens para Sellers */}
+                    <div className="px-6 md:px-12 -mt-10 relative z-20 mb-20 max-w-6xl mx-auto">
+                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 md:p-12 border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+                            <div className="text-center mb-10">
+                                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Vantagens para Sellers</h2>
+                                <p className="text-slate-600 dark:text-slate-400">Por que escolher o modelo Envios Leve para o seu negócio?</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {[
+                                    { icon: Rocket, color: "sky", title: "Mais Vendas e Conversão", items: ["Frete competitivo e prazos mais curtos aumentam a conversão.", "Destaque na vitrine do Carrefour com selo de entrega rápida."] },
+                                    { icon: DollarSign, color: "emerald", title: "Redução de Custos", items: ["Tarifas menores em relação aos Correios.", "Sem cobrança adicional de taxa de coleta ou gestão de transporte."] },
+                                    { icon: Settings, color: "indigo", title: "Gestão Automatizada", items: ["Etiqueta e romaneio enviados automaticamente por e-mail.", "Integração direta com Mirakl sem upload manual de informações."] },
+                                    { icon: Bell, color: "amber", title: "Acompanhamento Real-Time", items: ["Status de entrega e coleta atualizados automaticamente na Mirakl.", "Transparência total entre Seller, UX Group e Carrefour."] },
+                                    { icon: ShieldCheck, color: "blue", title: "Segurança e Suporte", items: ["Canal direto de atendimento e Grupo de WhatsApp opcional.", "Suporte UX e Carrefour acompanhando o processo ponta a ponta."] },
+                                    { icon: TrendingUp, color: "purple", title: "Crescimento Sustentável", items: ["Operação estruturada para escalar com novos volumes.", "Participação em projeto estratégico que melhora performance."] }
+                                ].map((v, i) => {
+                                    const StatIcon = v.icon;
+                                    return (
+                                        <div key={i} className={`bg-slate-50 dark:bg-slate-700/50 p-6 rounded-xl border-t-4 hover:shadow-md transition-all ${
+                                            v.color === 'sky' ? 'border-t-sky-500' :
+                                            v.color === 'emerald' ? 'border-t-emerald-500' :
+                                            v.color === 'indigo' ? 'border-t-indigo-500' :
+                                            v.color === 'amber' ? 'border-t-amber-500' :
+                                            v.color === 'blue' ? 'border-t-blue-500' :
+                                            'border-t-purple-500'
+                                        }`}>
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className={`p-2 rounded-lg ${
+                                                    v.color === 'sky' ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400' :
+                                                    v.color === 'emerald' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
+                                                    v.color === 'indigo' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                                                    v.color === 'amber' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' :
+                                                    v.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                                                    'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                                }`}>
+                                                    <StatIcon size={24} />
+                                                </div>
+                                                <h3 className="font-bold text-slate-800 dark:text-white leading-tight">{v.title}</h3>
+                                            </div>
+                                            <ul className="space-y-2">
+                                                {v.items.map((item, idx) => (
+                                                    <li key={idx} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
+                                                        <span className="text-slate-400 mt-1">•</span>
+                                                        <span>{item}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white leading-tight">{v.title}</h3>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Regras Operacionais Obrigatórias */}
+                    <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
+                        <div className="flex flex-col md:flex-row gap-12 items-start">
+                            <div className="md:w-1/3 sticky top-24">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 mb-6">
+                                    <AlertTriangle size={32} />
+                                </div>
+                                <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Regras Operacionais Obrigatórias</h2>
+                                <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                                    O cumprimento rigoroso destas premissas garante a fluidez do <em>cross-docking</em> e o cumprimento dos SLAs de entrega. A falha nestes pontos bloqueia a operação.
+                                </p>
+                            </div>
+                            <div className="md:w-2/3">
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden divide-y dark:divide-slate-700">
+                                    {[
+                                        { num: "1", title: "Nota Fiscal e SEFAZ", desc: "A NF deve estar autorizada na SEFAZ antes da geração da etiqueta. NFs não autorizadas bloqueiam o fluxo." },
+                                        { num: "2", title: "DANFE e Data de Emissão", desc: "Devem ser informadas corretamente na Mirakl. Essas informações acionam o Fusion e o TRUX para dar sequência no processo." },
+                                        { num: "3", title: "CNPJ e Inscrição Estadual", desc: "Desde que todos os CNPJs emissores de nota estejam previamente cadastrados com suas inscrições estaduais, o sistema faz a leitura automática sem intervenção manual." },
+                                        { num: "4", title: "Horário de Corte (10h59)", desc: "Pedidos aprovados até 10h59 entram no romaneio do mesmo dia. Após esse horário, são coletados no dia seguinte." },
+                                        { num: "5", title: "Expedição Same-Day", desc: "Todos os pedidos do romaneio devem ser expedidos no mesmo dia da coleta. Pedidos pendentes aguardam o próximo ciclo." },
+                                        { num: "6", title: "Qualidade da Etiqueta", desc: "Cada pedido deve conter uma única etiqueta com o código de barras DANFE (44 dígitos), impressa em alta qualidade (laser ou térmica) para garantir a leitura na bipagem." }
+                                    ].map((rule, i) => (
+                                        <div key={i} className="p-6 flex gap-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                            <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-black text-lg border border-blue-200 dark:border-blue-800">
+                                                {rule.num}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{rule.title}</h4>
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{rule.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Rotina e Boas Práticas & Canais de Atendimento */}
+                    <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
+                        <div className="grid lg:grid-cols-2 gap-8">
+                            
+                            {/* Rotina Operacional */}
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <Settings className="text-slate-700 dark:text-slate-300" size={28} />
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Rotina & Boas Práticas</h2>
+                                </div>
+                                <ul className="space-y-4">
+                                    {[
+                                        "A bipagem deve ocorrer no momento da coleta. Caso não seja possível, será realizada na base da transportadora.",
+                                        "O romaneio deve ser impresso em duas vias e assinado pelo seller e motorista no ato da coleta.",
+                                        "Mercadorias devem estar em perfeitas condições. Embalagens danificadas ou molhadas serão recusadas.",
+                                        "O motorista não aguardará caso os volumes não estejam prontos. Coletas ocorrem entre 13h e 18h.",
+                                        "Sellers com alto volume terão veículo dedicado e acompanhamento UX Group.",
+                                        "O UX Group realiza monitoria diária dos status entre Fusion, TRUX e Ondetah para garantir atualização na Mirakl."
+                                    ].map((pratica, idx) => (
+                                        <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                                            <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={18} />
+                                            <span>{pratica}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Canais de Atendimento e SLA */}
+                            <div className="bg-slate-900 dark:bg-slate-950 text-white p-8 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] pointer-events-none"></div>
+                                
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <MessageCircle className="text-blue-400" size={28} />
+                                        <h2 className="text-2xl font-bold">Atendimento & SLA</h2>
                                     </div>
-                                    <ul className="space-y-2">
-                                        {v.items.map((item, idx) => (
-                                            <li key={idx} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
-                                                <span className="text-slate-400 mt-1">•</span>
-                                                <span>{item}</span>
+
+                                    <div className="space-y-6 mb-8">
+                                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                                            <Mail className="text-blue-400 shrink-0" size={24} />
+                                            <div>
+                                                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Canal Oficial</p>
+                                                <a href="mailto:atendimento.carrefour@uxgroup.com.br" className="text-sm font-medium hover:text-blue-400 transition-colors">atendimento.carrefour@uxgroup.com.br</a>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                                            <MessageCircle className="text-emerald-400 shrink-0" size={24} />
+                                            <div>
+                                                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Comunicação Rápida</p>
+                                                <p className="text-sm font-medium">Grupo de WhatsApp opcional para comunicação diária. (Solicitações formais apenas por e-mail).</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                            <Clock size={16} /> Prazos e SLAs
+                                        </h3>
+                                        <div className="grid gap-3">
+                                            {[
+                                                { label: "Indenização/Reembolso", time: "Até 30 dias após baixa" },
+                                                { label: "Tratativa de ocorrências", time: "Até 3 dias úteis" },
+                                                { label: "Acariação (SP Capital)", time: "48h" },
+                                                { label: "Acariação (Interior SP)", time: "72h" },
+                                                { label: "Acariação (Outros Estados)", time: "96h" },
+                                                { label: "Contestação após acariação", time: "24h" }
+                                            ].map((sla, i) => (
+                                                <div key={i} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
+                                                    <span className="text-sm text-slate-300">{sla.label}</span>
+                                                    <span className="text-sm font-bold text-amber-400 text-right">{sla.time}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {/* Jornada do Pedido */}
+                    <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Resumo da Jornada Logística</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">Visão integrada da cadeia logística entre sistemas (Carrefour/Mirakl) e operação física (UX).</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-12">
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform"></div>
+                                <div className="relative bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 p-8 rounded-2xl shadow-sm h-full hover:shadow-lg transition-all">
+                                    <div className="w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg shadow-blue-200 dark:shadow-none">1</div>
+                                    <h3 className="text-xl font-bold text-blue-900 dark:text-blue-300 mb-4">Inbound & First Mile</h3>
+                                    <ul className="space-y-3">
+                                        {['Aprovação do pagamento no Mirakl', 'Geração de Etiqueta no Portal Fusion', 'Manuseio, separação e embalagem pelo Seller', 'Coleta pela Transportadora UX no Seller'].map((item, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                                <CheckCircle size={16} className="mt-0.5 text-blue-500 dark:text-blue-400 shrink-0" /> {item}
                                             </li>
                                         ))}
                                     </ul>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            </div>
-
-            {/* Regras Operacionais Obrigatórias */}
-            <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row gap-12 items-start">
-                    <div className="md:w-1/3 sticky top-24">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500 mb-6">
-                            <AlertTriangle size={32} />
-                        </div>
-                        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Regras Operacionais Obrigatórias</h2>
-                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-                            O cumprimento rigoroso destas premissas garante a fluidez do <em>cross-docking</em> e o cumprimento dos SLAs de entrega. A falha nestes pontos bloqueia a operação.
-                        </p>
-                    </div>
-                    <div className="md:w-2/3">
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden divide-y dark:divide-slate-700">
-                            {[
-                                { num: "1", title: "Nota Fiscal e SEFAZ", desc: "A NF deve estar autorizada na SEFAZ antes da geração da etiqueta. NFs não autorizadas bloqueiam o fluxo." },
-                                { num: "2", title: "DANFE e Data de Emissão", desc: "Devem ser informadas corretamente na Mirakl. Essas informações acionam o Fusion e o TRUX para dar sequência no processo." },
-                                { num: "3", title: "CNPJ e Inscrição Estadual", desc: "Desde que todos os CNPJs emissores de nota estejam previamente cadastrados com suas inscrições estaduais, o sistema faz a leitura automática sem intervenção manual." },
-                                { num: "4", title: "Horário de Corte (10h59)", desc: "Pedidos aprovados até 10h59 entram no romaneio do mesmo dia. Após esse horário, são coletados no dia seguinte." },
-                                { num: "5", title: "Expedição Same-Day", desc: "Todos os pedidos do romaneio devem ser expedidos no mesmo dia da coleta. Pedidos pendentes aguardam o próximo ciclo." },
-                                { num: "6", title: "Qualidade da Etiqueta", desc: "Cada pedido deve conter uma única etiqueta com o código de barras DANFE (44 dígitos), impressa em alta qualidade (laser ou térmica) para garantir a leitura na bipagem." }
-                            ].map((rule, i) => (
-                                <div key={i} className="p-6 flex gap-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                                    <div className="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-black text-lg border border-blue-200 dark:border-blue-800">
-                                        {rule.num}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{rule.title}</h4>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{rule.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Rotina e Boas Práticas & Canais de Atendimento */}
-            <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
-                <div className="grid lg:grid-cols-2 gap-8">
-                    
-                    {/* Rotina Operacional */}
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Settings className="text-slate-700 dark:text-slate-300" size={28} />
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Rotina & Boas Práticas</h2>
-                        </div>
-                        <ul className="space-y-4">
-                            {[
-                                "A bipagem deve ocorrer no momento da coleta. Caso não seja possível, será realizada na base da transportadora.",
-                                "O romaneio deve ser impresso em duas vias e assinado pelo seller e motorista no ato da coleta.",
-                                "Mercadorias devem estar em perfeitas condições. Embalagens danificadas ou molhadas serão recusadas.",
-                                "O motorista não aguardará caso os volumes não estejam prontos. Coletas ocorrem entre 13h e 18h.",
-                                "Sellers com alto volume terão veículo dedicado e acompanhamento UX Group.",
-                                "O UX Group realiza monitoria diária dos status entre Fusion, TRUX e Ondetah para garantir atualização na Mirakl."
-                            ].map((pratica, idx) => (
-                                <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                                    <CheckCircle className="text-emerald-500 shrink-0 mt-0.5" size={18} />
-                                    <span>{pratica}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Canais de Atendimento e SLA */}
-                    <div className="bg-slate-900 dark:bg-slate-950 text-white p-8 rounded-2xl border border-slate-800 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] pointer-events-none"></div>
-                        
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-8">
-                                <MessageCircle className="text-blue-400" size={28} />
-                                <h2 className="text-2xl font-bold">Atendimento & SLA</h2>
-                            </div>
-
-                            <div className="space-y-6 mb-8">
-                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                                    <Mail className="text-blue-400 shrink-0" size={24} />
-                                    <div>
-                                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Canal Oficial</p>
-                                        <a href="mailto:atendimento.carrefour@uxgroup.com.br" className="text-sm font-medium hover:text-blue-400 transition-colors">atendimento.carrefour@uxgroup.com.br</a>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                                    <MessageCircle className="text-emerald-400 shrink-0" size={24} />
-                                    <div>
-                                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Comunicação Rápida</p>
-                                        <p className="text-sm font-medium">Grupo de WhatsApp opcional para comunicação diária. (Solicitações formais apenas por e-mail).</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <Clock size={16} /> Prazos e SLAs
-                                </h3>
-                                <div className="grid gap-3">
-                                    {[
-                                        { label: "Indenização/Reembolso", time: "Até 30 dias após baixa" },
-                                        { label: "Tratativa de ocorrências", time: "Até 3 dias úteis" },
-                                        { label: "Acariação (SP Capital)", time: "48h" },
-                                        { label: "Acariação (Interior SP)", time: "72h" },
-                                        { label: "Acariação (Outros Estados)", time: "96h" },
-                                        { label: "Contestação após acariação", time: "24h" }
-                                    ].map((sla, i) => (
-                                        <div key={i} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
-                                            <span className="text-sm text-slate-300">{sla.label}</span>
-                                            <span className="text-sm font-bold text-amber-400 text-right">{sla.time}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            {/* Jornada do Pedido (Existente, atualizada para contexto final) */}
-            <div className="px-6 md:px-12 mb-20 max-w-6xl mx-auto">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Resumo da Jornada Logística</h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">Visão integrada da cadeia logística entre sistemas (Carrefour/Mirakl) e operação física (UX).</p>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-12">
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-blue-100 dark:bg-blue-900/30 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform"></div>
-                        <div className="relative bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 p-8 rounded-2xl shadow-sm h-full hover:shadow-lg transition-all">
-                            <div className="w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg shadow-blue-200 dark:shadow-none">1</div>
-                            <h3 className="text-xl font-bold text-blue-900 dark:text-blue-300 mb-4">Inbound & First Mile</h3>
-                            <ul className="space-y-3">
-                                {['Aprovação do pagamento no Mirakl', 'Geração de Etiqueta no Portal Fusion', 'Manuseio, separação e embalagem pelo Seller', 'Coleta pela Transportadora UX no Seller'].map((item, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                                        <CheckCircle size={16} className="mt-0.5 text-blue-500 dark:text-blue-400 shrink-0" /> {item}
-                                    </li>
-                                ))}
-                            </ul>
-                            <div className="mt-6 pt-6 border-t border-blue-100 dark:border-slate-700">
-                                <span className="text-xs font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">ACIONAMENTO</span>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                                    O fluxo de coleta é gerado e agendado automaticamente a partir do manuseio sistémico.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-sky-100 dark:bg-sky-900/30 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform"></div>
-                        <div className="relative bg-white dark:bg-slate-800 border border-sky-200 dark:border-slate-700 p-8 rounded-2xl shadow-sm h-full hover:shadow-lg transition-all">
-                            <div className="w-12 h-12 bg-sky-600 dark:bg-sky-500 text-white rounded-xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg shadow-sky-200 dark:shadow-none">2</div>
-                            <h3 className="text-xl font-bold text-sky-900 dark:text-sky-300 mb-4">Triagem & Last Mile</h3>
-                            <ul className="space-y-3">
-                                {['Ativação de Tracking no OndeTah', 'Recepção e Cross-Docking no HUB Transporte', 'Roteirização e carregamento Last Mile', 'Entrega confirmada no destino (Cliente)'].map((item, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
-                                        <CheckCircle size={16} className="mt-0.5 text-sky-500 dark:text-sky-400 shrink-0" /> {item}
-                                    </li>
-                                ))}
-                            </ul>
-                            <div className="mt-6 pt-6 border-t border-sky-100 dark:border-slate-700">
-                                <span className="text-xs font-bold text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-900/30 px-3 py-1 rounded-full border border-sky-200 dark:border-sky-800">ZERO ATRITO</span>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                                    Os Hubs operam como pontos de passagem rápida. O foco é manter a encomenda sempre em movimento.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="bg-slate-900 dark:bg-black text-white px-6 md:px-12 py-16 text-center transition-colors duration-300">
-                <Globe className="w-12 h-12 mx-auto mb-6 text-sky-500" />
-                <h2 className="text-2xl font-bold mb-4">O Novo Standard Logístico</h2>
-                <p className="text-slate-300 max-w-3xl mx-auto text-lg leading-relaxed mb-8">
-                    O modelo <strong>ENVIOS LEVE</strong> cria um ecossistema integrado que empodera o Seller a focar no que mais importa: as vendas. Toda a complexidade, regras fiscais e capilaridade de entrega são solucionadas por uma arquitetura única e transparente.
-                </p>
-            </div>
-        </div>
-    </div>
-);
-
-// --- APP PRINCIPAL ---
-export default function App() {
-    const [activeTab, setActiveTab] = useState('presentation'); // Changed default to presentation
-    const [selectedNode, setSelectedNode] = useState(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [isDarkMode, setIsDarkMode] = useState(false);
-    
-    // Dados do fluxograma
-    const nodes = [
-        // COLUNA ESQUERDA (Inbound & First Mile)
-        { id: 'n1', type: 'sale', x: 370, y: 150, label: 'Pagamento Aprovado', icon: ShoppingCart, system: 'Mirakl / Carrefour', shortDesc: 'Confirmação do Pedido', details: 'Aprovação financeira do pedido do cliente. Regra de ouro: Pedidos aprovados até as 10h59m59s entram automaticamente na grade de coleta do próprio dia.' },
-        { id: 'n2', type: 'system', x: 370, y: 300, label: 'Fusion Gera Etiqueta', icon: FileText, system: 'Portal Fusion', shortDesc: 'Etiqueta Disponível', details: 'O sistema Fusion processa a transação e disponibiliza a etiqueta de transporte no portal para que o Seller inicie a preparação. A NF deve estar autorizada na SEFAZ.' },
-        { id: 'n3', type: 'transfer', x: 370, y: 450, label: 'Manuseio SELLERS', icon: Package, system: 'Operação Seller', shortDesc: 'Separação e Embalagem', details: 'O Seller imprime a etiqueta (com código de barras 44 dígitos de alta qualidade), realiza o picking do produto, embala e deixa pronto para a coleta acompanhado do romaneio em duas vias.' },
-        { id: 'n4', type: 'transfer', x: 370, y: 600, label: 'Coleta TRANSPORTADOR', icon: Truck, system: 'First Mile UX', shortDesc: 'Coleta na Origem', details: 'Veículo da transportadora desloca-se ao Seller entre as 13h00 e 18h00. O motorista recolhe as encomendas manifestadas e deve realizar a bipagem no ato.' },
-        
-        // TRIGGERS HORIZONTAIS
-        { id: 'n5', type: 'control', x: 700, y: 450, label: 'Agenda Coleta', icon: Target, system: 'Roteirização', shortDesc: 'Grade de Horários', details: 'Após a entrada e manuseio da encomenda no sistema, a rota é agendada para o período vespertino, garantindo que tudo que entrou antes do cut-off será processado.' },
-        { id: 'n6', type: 'control', x: 700, y: 600, label: 'Tracking OndeTah', icon: Activity, system: 'Sistema OndeTah', shortDesc: 'Visibilidade Iniciada', details: 'Assim que ocorre a bipagem de coleta, o sistema ativa o rastreamento, atualizando a Mirakl de forma transparente para Seller e Consumidor.' },
-        
-        // COLUNA DIREITA (Outbound, Hub & Last Mile)
-        { id: 'n7', type: 'system', x: 1030, y: 200, label: 'HUB Transporte', icon: RefreshCw, system: 'Hub UX', shortDesc: 'Cross-Docking', details: 'A encomenda entra no Hub, passa pelo processo rápido de triagem e é reencaminhada de imediato sem armazenamento.' },
-        { id: 'n8', type: 'transfer', x: 1030, y: 350, label: 'Last Mile', icon: Send, system: 'Transporte Final UX', shortDesc: 'Expedição Diária', details: 'Expedição no mesmo dia da coleta. Carregamento nos veículos de última milha com rotas otimizadas.' },
-        { id: 'n9', type: 'sale', x: 1030, y: 500, label: 'Cliente Final', icon: CheckCircle, system: 'Destino', shortDesc: 'Entrega Realizada', details: 'Entrega concluída com captura de prova de entrega via App. Ponto final do fluxo logístico monitorado.' },
-    ];
-
-    const connections = [
-        // Fluxo Principal (Esquerda)
-        { from: 'n1', to: 'n2' },
-        { from: 'n2', to: 'n3' },
-        { from: 'n3', to: 'n4' },
-        
-        // Transição Esquerda -> Direita
-        { from: 'n4', to: 'n7', label: 'Trânsito para Base' },
-        
-        // Fluxo Principal (Direita)
-        { from: 'n7', to: 'n8' },
-        { from: 'n8', to: 'n9' },
-        
-        // Gatilhos Laterais (Side Actions)
-        { from: 'n3', to: 'n5', type: 'side', label: 'Aciona' },
-        { from: 'n4', to: 'n6', type: 'side', label: 'Inicia' },
-    ];
-
-    return (
-        <div className={`${isDarkMode ? 'dark' : ''} h-screen w-full flex flex-col font-sans overflow-hidden bg-slate-100`}>
-            <style>{`
-                @keyframes flow { to { stroke-dashoffset: -20; } }
-                .animate-flow { animation: flow 1s linear infinite; }
-                .scrollbar-hide::-webkit-scrollbar { display: none; }
-                .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-            `}</style>
-
-            <div className="flex flex-col h-screen text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 transition-colors duration-300 overflow-hidden">
-                {/* Header Superior */}
-                <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 shadow-sm flex flex-wrap justify-between items-center z-30 transition-colors duration-300">
-                    <div className="flex items-center gap-6 flex-wrap">
-                        <div className="flex items-center gap-4 border-r border-slate-200 dark:border-slate-700 pr-6 h-12">
-                            <LogoUX className="h-3/4 w-auto text-black dark:text-white" />
-                            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
-                            <span className="font-bold text-blue-800 dark:text-blue-400 text-xl tracking-tight">Carrefour</span>
-                        </div>
-
-                        <div className="hidden sm:block">
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">Projeto Envios</h1>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Operação Leve</p>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 mt-2 sm:mt-0">
-                        {/* Tabs */}
-                        <div className="bg-slate-100 dark:bg-slate-900 p-1 rounded-lg flex text-sm font-semibold shadow-inner">
-                            <button 
-                                onClick={() => setActiveTab('presentation')}
-                                className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'presentation' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-500 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                            >
-                                <Users size={16} /> <span className="hidden md:inline">Manual Operacional</span>
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('flowchart')}
-                                className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'flowchart' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-                            >
-                                <Layout size={16} /> <span className="hidden md:inline">Fluxo Técnico</span>
-                            </button>
-                        </div>
-
-                        {/* Theme Toggle */}
-                        <button 
-                            onClick={() => setIsDarkMode(!isDarkMode)} 
-                            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                            title={isDarkMode ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
-                        >
-                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-                    </div>
-                </header>
-
-                {/* Conteudo Principal */}
-                <div className="flex flex-1 overflow-hidden relative">
-                    {activeTab === 'presentation' ? (
-                        <SellerPresentation />
-                    ) : (
-                        <>
-                            {/* Sidebar Detalhes */}
-                            <div className={`
-                                bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-xl z-20 flex flex-col overflow-hidden transition-all duration-300 absolute md:relative h-full
-                                ${isSidebarOpen ? 'w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0 pointer-events-none'}
-                            `}>
-                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center whitespace-nowrap">
-                                    <div>
-                                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Painel de Detalhes</h2>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {selectedNode ? "Inspeção de nó" : "Visão Geral"}
+                                    <div className="mt-6 pt-6 border-t border-blue-100 dark:border-slate-700">
+                                        <span className="text-xs font-bold text-blue-800 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-800">ACIONAMENTO</span>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                            O fluxo de coleta é gerado e agendado automaticamente a partir do manuseio sistémico.
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {selectedNode && (
-                                            <button 
-                                                onClick={() => setSelectedNode(null)} 
-                                                className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
-                                                title="Voltar para Visão Geral"
-                                            >
-                                                <ArrowLeft size={16} />
-                                            </button>
-                                        )}
-                                        <button 
-                                            onClick={() => setIsSidebarOpen(false)} 
-                                            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full text-slate-400 hover:text-red-500 transition-colors"
-                                            title="Fechar Painel"
-                                        >
-                                            <X size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-                                    {selectedNode ? (
-                                        <div className="animate-fade-in relative">
-                                            <div className="flex items-start gap-4 mb-6">
-                                                <div className={`p-3 rounded-xl shadow-sm ${
-                                                    selectedNode.type === 'transfer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 
-                                                    selectedNode.type === 'sale' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 
-                                                    selectedNode.type === 'control' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                                }`}>
-                                                    {React.createElement(selectedNode.icon, { size: 32 })}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-xl text-slate-900 dark:text-white">{selectedNode.label}</h3>
-                                                    <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">
-                                                        {selectedNode.system}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="space-y-6">
-                                                <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1"><FileText size={12}/> Descrição Funcional</h4>
-                                                    <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{selectedNode.details}</p>
-                                                </div>
-
-                                                {selectedNode.type === 'transfer' && (
-                                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50 text-blue-800 dark:text-blue-300 text-sm">
-                                                        <strong className="dark:text-blue-200">Foco:</strong> Movimentação e First/Last Mile.
-                                                    </div>
-                                                )}
-                                                {selectedNode.type === 'sale' && (
-                                                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-sm">
-                                                        <strong className="dark:text-emerald-200">Status:</strong> Pedido e Consumidor Final.
-                                                    </div>
-                                                )}
-                                                {selectedNode.type === 'control' && (
-                                                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-2">
-                                                        <Zap className="shrink-0 mt-0.5" size={16}/>
-                                                        <span><strong className="dark:text-amber-200">Gatilho de Regra:</strong> Ação impulsionada pelo cumprimento das premissas de SLA e Sistemas.</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="animate-fade-in space-y-6">
-                                            <div className="flex items-center gap-4 mb-2">
-                                                <div className="p-3 rounded-xl shadow-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
-                                                    <Info size={32} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-xl text-slate-900 dark:text-white">Visão Geral</h3>
-                                                    <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">Fluxo Integrado Leve</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
-                                                    <FileText size={12}/> Resumo do Processo
-                                                </h4>
-                                                <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                                                    Este diagrama detalha de forma exata a operação de <strong className="dark:text-white">Envios Leve</strong> apresentada nos mapeamentos.
-                                                    <br/><br/>
-                                                    O fluxo obedece às regras de aprovação (<strong className="dark:text-white">Cut-off 10h59m59s</strong>) e aos agendamentos precisos (<strong className="dark:text-white">Janela 13h-18h</strong>).
-                                                </p>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded text-center">
-                                                    <div className="text-blue-600 dark:text-blue-400 font-bold text-lg">Inbound</div>
-                                                    <div className="text-xs text-blue-400 dark:text-blue-500">Seller a Hub</div>
-                                                </div>
-                                                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded text-center">
-                                                    <div className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">Outbound</div>
-                                                    <div className="text-xs text-emerald-400 dark:text-emerald-500">Hub a Cliente</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
-                            {/* Canvas Fluxograma */}
-                            <div 
-                                className="flex-1 overflow-auto relative bg-slate-100 dark:bg-slate-900 cursor-grab active:cursor-grabbing transition-colors duration-300"
-                                onClick={() => setSelectedNode(null)} 
-                            >
-                                {/* Botão Flutuante para Reabrir Painel */}
-                                {!isSidebarOpen && (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(true); }}
-                                        className="absolute top-4 left-4 z-50 bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:scale-110 transition-all border border-slate-200 dark:border-slate-700"
-                                        title="Abrir Painel de Detalhes"
-                                    >
-                                        <PanelLeft size={24} />
-                                    </button>
-                                )}
-
-                                <div className="relative min-w-[1400px] min-h-[900px] mx-auto py-10">
-                                    
-                                    <div className="absolute inset-0 flex pointer-events-none mx-10 my-10 bg-white dark:bg-slate-800/50 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-300">
-                                        <div className="w-1/2 border-r border-slate-100 dark:border-slate-800 bg-gradient-to-b from-blue-50/30 dark:from-blue-900/10 to-white dark:to-transparent relative">
-                                            <div className="absolute top-6 left-6 text-blue-300 dark:text-blue-900/40 font-bold text-4xl opacity-20 dark:opacity-40 select-none uppercase tracking-widest">
-                                                Preparação & First Mile
-                                            </div>
-                                        </div>
-                                        <div className="w-1/2 bg-gradient-to-b from-emerald-50/30 dark:from-emerald-900/10 to-white dark:to-transparent relative">
-                                            <div className="absolute top-6 right-6 text-emerald-300 dark:text-emerald-900/40 font-bold text-4xl opacity-20 dark:opacity-40 select-none uppercase tracking-widest">
-                                                HUB Transporte UX & Last Mile
-                                            </div>
-                                        </div>
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-sky-100 dark:bg-sky-900/30 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform"></div>
+                                <div className="relative bg-white dark:bg-slate-800 border border-sky-200 dark:border-slate-700 p-8 rounded-2xl shadow-sm h-full hover:shadow-lg transition-all">
+                                    <div className="w-12 h-12 bg-sky-600 dark:bg-sky-500 text-white rounded-xl flex items-center justify-center font-bold text-xl mb-6 shadow-lg shadow-sky-200 dark:shadow-none">2</div>
+                                    <h3 className="text-xl font-bold text-sky-900 dark:text-sky-300 mb-4">Triagem & Last Mile</h3>
+                                    <ul className="space-y-3">
+                                        {['Ativação de Tracking no OndeTah', 'Recepção e Cross-Docking no HUB Transporte', 'Roteirização e carregamento Last Mile', 'Entrega confirmada no destino (Cliente)'].map((item, i) => (
+                                            <li key={i} className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+                                                <CheckCircle size={16} className="mt-0.5 text-sky-500 dark:text-sky-400 shrink-0" /> {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <div className="mt-6 pt-6 border-t border-sky-100 dark:border-slate-700">
+                                        <span className="text-xs font-bold text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-900/30 px-3 py-1 rounded-full border border-sky-200 dark:border-sky-800">ZERO ATRITO</span>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                                            Os Hubs operam como pontos de passagem rápida. O foco é manter a encomenda sempre em movimento.
+                                        </p>
                                     </div>
-
-                                    <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
-                                        {connections.map((conn, index) => {
-                                            const startNode = nodes.find(n => n.id === conn.from);
-                                            const endNode = nodes.find(n => n.id === conn.to);
-                                            if (!startNode || !endNode) return null;
-                                            return (
-                                                <Connection 
-                                                    key={index} 
-                                                    start={startNode} 
-                                                    end={endNode} 
-                                                    label={conn.label}
-                                                    type={conn.type}
-                                                    isDarkMode={isDarkMode}
-                                                />
-                                            );
-                                        })}
-                                    </svg>
-
-                                    {nodes.map(node => (
-                                        <Node 
-                                            key={node.id} 
-                                            data={node} 
-                                            onClick={setSelectedNode}
-                                            isSelected={selectedNode?.id === node.id}
-                                        />
-                                    ))}
                                 </div>
                             </div>
-                        </>
-                    )}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-slate-900 dark:bg-black text-white px-6 md:px-12 py-16 text-center transition-colors duration-300">
+                        <Globe className="w-12 h-12 mx-auto mb-6 text-sky-500" />
+                        <h2 className="text-2xl font-bold mb-4">O Novo Standard Logístico</h2>
+                        <p className="text-slate-300 max-w-3xl mx-auto text-lg leading-relaxed mb-8">
+                            O modelo <strong>ENVIOS LEVE</strong> cria um ecossistema integrado que empodera o Seller a focar no que mais importa: as vendas. Toda a complexidade, regras fiscais e capilaridade de entrega são solucionadas por uma arquitetura única e transparente.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+
+        // --- APP PRINCIPAL ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('presentation'); 
+            const [selectedNode, setSelectedNode] = useState(null);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            
+            // Toggle do Dark Mode do Tailwind na tag <html>
+            React.useEffect(() => {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [isDarkMode]);
+            
+            const nodes = [
+                { id: 'n1', type: 'sale', x: 370, y: 150, label: 'Pagamento Aprovado', icon: ShoppingCart, system: 'Mirakl / Carrefour', shortDesc: 'Confirmação do Pedido', details: 'Aprovação financeira do pedido do cliente. Regra de ouro: Pedidos aprovados até as 10h59m59s entram automaticamente na grade de coleta do próprio dia.' },
+                { id: 'n2', type: 'system', x: 370, y: 300, label: 'Fusion Gera Etiqueta', icon: FileText, system: 'Portal Fusion', shortDesc: 'Etiqueta Disponível', details: 'O sistema Fusion processa a transação e disponibiliza a etiqueta de transporte no portal para que o Seller inicie a preparação. A NF deve estar autorizada na SEFAZ.' },
+                { id: 'n3', type: 'transfer', x: 370, y: 450, label: 'Manuseio SELLERS', icon: Package, system: 'Operação Seller', shortDesc: 'Separação e Embalagem', details: 'O Seller imprime a etiqueta (com código de barras 44 dígitos de alta qualidade), realiza o picking do produto, embala e deixa pronto para a coleta acompanhado do romaneio em duas vias.' },
+                { id: 'n4', type: 'transfer', x: 370, y: 600, label: 'Coleta TRANSPORTADOR', icon: Truck, system: 'First Mile UX', shortDesc: 'Coleta na Origem', details: 'Veículo da transportadora desloca-se ao Seller entre as 13h00 e 18h00. O motorista recolhe as encomendas manifestadas e deve realizar a bipagem no ato.' },
+                
+                { id: 'n5', type: 'control', x: 700, y: 450, label: 'Agenda Coleta', icon: Target, system: 'Roteirização', shortDesc: 'Grade de Horários', details: 'Após a entrada e manuseio da encomenda no sistema, a rota é agendada para o período vespertino, garantindo que tudo que entrou antes do cut-off será processado.' },
+                { id: 'n6', type: 'control', x: 700, y: 600, label: 'Tracking OndeTah', icon: Activity, system: 'Sistema OndeTah', shortDesc: 'Visibilidade Iniciada', details: 'Assim que ocorre a bipagem de coleta, o sistema ativa o rastreamento, atualizando a Mirakl de forma transparente para Seller e Consumidor.' },
+                
+                { id: 'n7', type: 'system', x: 1030, y: 200, label: 'HUB Transporte', icon: RefreshCw, system: 'Hub UX', shortDesc: 'Cross-Docking', details: 'A encomenda entra no Hub, passa pelo processo rápido de triagem e é reencaminhada de imediato sem armazenamento.' },
+                { id: 'n8', type: 'transfer', x: 1030, y: 350, label: 'Last Mile', icon: Send, system: 'Transporte Final UX', shortDesc: 'Expedição Diária', details: 'Expedição no mesmo dia da coleta. Carregamento nos veículos de última milha com rotas otimizadas.' },
+                { id: 'n9', type: 'sale', x: 1030, y: 500, label: 'Cliente Final', icon: CheckCircle, system: 'Destino', shortDesc: 'Entrega Realizada', details: 'Entrega concluída com captura de prova de entrega via App. Ponto final do fluxo logístico monitorado.' },
+            ];
+
+            const connections = [
+                { from: 'n1', to: 'n2' },
+                { from: 'n2', to: 'n3' },
+                { from: 'n3', to: 'n4' },
+                { from: 'n4', to: 'n7', label: 'Trânsito para Base' },
+                { from: 'n7', to: 'n8' },
+                { from: 'n8', to: 'n9' },
+                { from: 'n3', to: 'n5', type: 'side', label: 'Aciona' },
+                { from: 'n4', to: 'n6', type: 'side', label: 'Inicia' },
+            ];
+
+            return (
+                <div className={`h-screen w-full flex flex-col font-sans overflow-hidden bg-slate-100 transition-colors duration-300 dark:bg-slate-900`}>
+                    <div className="flex flex-col h-screen text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-900 transition-colors duration-300 overflow-hidden">
+                        {/* Header Superior */}
+                        <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-3 shadow-sm flex flex-wrap justify-between items-center z-30 transition-colors duration-300">
+                            <div className="flex items-center gap-6 flex-wrap">
+                                <div className="flex items-center gap-4 border-r border-slate-200 dark:border-slate-700 pr-6 h-12">
+                                    <LogoUX className="h-3/4 w-auto text-black dark:text-white" />
+                                    <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                                    <span className="font-bold text-blue-800 dark:text-blue-400 text-xl tracking-tight">Carrefour</span>
+                                </div>
+
+                                <div className="hidden sm:block">
+                                    <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">Projeto Envios</h1>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Operação Leve</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 mt-2 sm:mt-0">
+                                {/* Tabs */}
+                                <div className="bg-slate-100 dark:bg-slate-900 p-1 rounded-lg flex text-sm font-semibold shadow-inner border border-slate-200 dark:border-slate-700">
+                                    <button 
+                                        onClick={() => setActiveTab('presentation')}
+                                        className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'presentation' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-500 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                    >
+                                        <Users size={16} /> <span className="hidden md:inline">Manual Operacional</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveTab('flowchart')}
+                                        className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'flowchart' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                    >
+                                        <Layout size={16} /> <span className="hidden md:inline">Fluxo Técnico</span>
+                                    </button>
+                                </div>
+
+                                {/* Theme Toggle */}
+                                <button 
+                                    onClick={() => setIsDarkMode(!isDarkMode)} 
+                                    className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                                    title={isDarkMode ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
+                                >
+                                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* Conteudo Principal */}
+                        <div className="flex flex-1 overflow-hidden relative">
+                            {activeTab === 'presentation' ? (
+                                <SellerPresentation />
+                            ) : (
+                                <>
+                                    {/* Sidebar Detalhes */}
+                                    <div className={`
+                                        bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-xl z-20 flex flex-col overflow-hidden transition-all duration-300 absolute md:relative h-full
+                                        ${isSidebarOpen ? 'w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0 pointer-events-none'}
+                                    `}>
+                                        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center whitespace-nowrap">
+                                            <div>
+                                                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Painel de Detalhes</h2>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    {selectedNode ? "Inspeção de nó" : "Visão Geral"}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {selectedNode && (
+                                                    <button 
+                                                        onClick={() => setSelectedNode(null)} 
+                                                        className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-full text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                                                        title="Voltar para Visão Geral"
+                                                    >
+                                                        <ArrowLeft size={16} />
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={() => setIsSidebarOpen(false)} 
+                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                                                    title="Fechar Painel"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+                                            {selectedNode ? (
+                                                <div className="animate-fade-in relative">
+                                                    <div className="flex items-start gap-4 mb-6">
+                                                        <div className={`p-3 rounded-xl shadow-sm ${
+                                                            selectedNode.type === 'transfer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 
+                                                            selectedNode.type === 'sale' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 
+                                                            selectedNode.type === 'control' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                                        }`}>
+                                                            {React.createElement(selectedNode.icon, { size: 32 })}
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-xl text-slate-900 dark:text-white">{selectedNode.label}</h3>
+                                                            <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">
+                                                                {selectedNode.system}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-6">
+                                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1"><FileText size={12}/> Descrição Funcional</h4>
+                                                            <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{selectedNode.details}</p>
+                                                        </div>
+
+                                                        {selectedNode.type === 'transfer' && (
+                                                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50 text-blue-800 dark:text-blue-300 text-sm">
+                                                                <strong className="dark:text-blue-200">Foco:</strong> Movimentação e First/Last Mile.
+                                                            </div>
+                                                        )}
+                                                        {selectedNode.type === 'sale' && (
+                                                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-sm">
+                                                                <strong className="dark:text-emerald-200">Status:</strong> Pedido e Consumidor Final.
+                                                            </div>
+                                                        )}
+                                                        {selectedNode.type === 'control' && (
+                                                            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50 text-amber-800 dark:text-amber-300 text-sm flex items-start gap-2">
+                                                                <Zap className="shrink-0 mt-0.5" size={16}/>
+                                                                <span><strong className="dark:text-amber-200">Gatilho de Regra:</strong> Ação impulsionada pelo cumprimento das premissas de SLA e Sistemas.</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="animate-fade-in space-y-6">
+                                                    <div className="flex items-center gap-4 mb-2">
+                                                        <div className="p-3 rounded-xl shadow-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400">
+                                                            <Info size={32} />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="font-bold text-xl text-slate-900 dark:text-white">Visão Geral</h3>
+                                                            <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">Fluxo Integrado Leve</span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
+                                                            <FileText size={12}/> Resumo do Processo
+                                                        </h4>
+                                                        <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                                                            Este diagrama detalha de forma exata a operação de <strong className="dark:text-white">Envios Leve</strong> apresentada nos mapeamentos.
+                                                            <br/><br/>
+                                                            O fluxo obedece às regras de aprovação (<strong className="dark:text-white">Cut-off 10h59m59s</strong>) e aos agendamentos precisos (<strong className="dark:text-white">Janela 13h-18h</strong>).
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 rounded text-center">
+                                                            <div className="text-blue-600 dark:text-blue-400 font-bold text-lg">Inbound</div>
+                                                            <div className="text-xs text-blue-400 dark:text-blue-500">Seller a Hub</div>
+                                                        </div>
+                                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/50 rounded text-center">
+                                                            <div className="text-emerald-600 dark:text-emerald-400 font-bold text-lg">Outbound</div>
+                                                            <div className="text-xs text-emerald-400 dark:text-emerald-500">Hub a Cliente</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Canvas Fluxograma */}
+                                    <div 
+                                        className="flex-1 overflow-auto relative bg-slate-100 dark:bg-slate-900 cursor-grab active:cursor-grabbing transition-colors duration-300"
+                                        onClick={() => setSelectedNode(null)} 
+                                    >
+                                        {/* Botão Flutuante para Reabrir Painel */}
+                                        {!isSidebarOpen && (
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); setIsSidebarOpen(true); }}
+                                                className="absolute top-4 left-4 z-50 bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:scale-110 transition-all border border-slate-200 dark:border-slate-700"
+                                                title="Abrir Painel de Detalhes"
+                                            >
+                                                <PanelLeft size={24} />
+                                            </button>
+                                        )}
+
+                                        <div className="relative min-w-[1400px] min-h-[900px] mx-auto py-10">
+                                            
+                                            <div className="absolute inset-0 flex pointer-events-none mx-10 my-10 bg-white dark:bg-slate-800/50 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+                                                <div className="w-1/2 border-r border-slate-100 dark:border-slate-800 bg-gradient-to-b from-blue-50/30 dark:from-blue-900/10 to-white dark:to-transparent relative">
+                                                    <div className="absolute top-6 left-6 text-blue-300 dark:text-blue-900/40 font-bold text-4xl opacity-20 dark:opacity-40 select-none uppercase tracking-widest">
+                                                        Preparação & First Mile
+                                                    </div>
+                                                </div>
+                                                <div className="w-1/2 bg-gradient-to-b from-emerald-50/30 dark:from-emerald-900/10 to-white dark:to-transparent relative">
+                                                    <div className="absolute top-6 right-6 text-emerald-300 dark:text-emerald-900/40 font-bold text-4xl opacity-20 dark:opacity-40 select-none uppercase tracking-widest">
+                                                        HUB Transporte UX & Last Mile
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <svg className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+                                                {connections.map((conn, index) => {
+                                                    const startNode = nodes.find(n => n.id === conn.from);
+                                                    const endNode = nodes.find(n => n.id === conn.to);
+                                                    if (!startNode || !endNode) return null;
+                                                    return (
+                                                        <Connection 
+                                                            key={index} 
+                                                            start={startNode} 
+                                                            end={endNode} 
+                                                            label={conn.label}
+                                                            type={conn.type}
+                                                            isDarkMode={isDarkMode}
+                                                        />
+                                                    );
+                                                })}
+                                            </svg>
+
+                                            {nodes.map(node => (
+                                                <Node 
+                                                    key={node.id} 
+                                                    data={node} 
+                                                    onClick={setSelectedNode}
+                                                    isSelected={selectedNode?.id === node.id}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
