@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrefour Envios - Operação Leve</title>
+    <title>UX Envios - Operação Leve</title>
     
     <!-- Tailwind CSS (via CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -229,10 +229,10 @@
                         <div className="relative z-10 max-w-5xl mx-auto mt-8">
                             <div className="flex items-center gap-3 mb-6">
                                 <span className="font-bold text-white text-xl tracking-tight">Carrefour</span>
-                                <span className="bg-sky-500 text-slate-900 px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm">Logística Expressa</span>
+                                <span className="bg-sky-500 text-slate-900 px-3 py-1 text-xs font-bold uppercase tracking-widest rounded-sm">UX Envios</span>
                             </div>
                             <h1 className="text-5xl md:text-6xl font-extrabold mb-6 tracking-tight leading-tight">
-                                ENVIOS <span className="text-sky-500">LEVE</span>
+                                UX <span className="text-sky-500">ENVIOS</span>
                             </h1>
                             <p className="text-xl text-slate-300 font-light max-w-2xl leading-relaxed border-l-4 border-sky-500 pl-4">
                                 Fluxo Ágil, Triagem Inteligente & Distribuição Pulverizada. <br/>
@@ -252,7 +252,7 @@
                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-8 md:p-12 border border-slate-100 dark:border-slate-700 transition-colors duration-300">
                             <div className="text-center mb-10">
                                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">Vantagens para Sellers</h2>
-                                <p className="text-slate-600 dark:text-slate-400">Por que escolher o modelo Envios Leve para o seu negócio?</p>
+                                <p className="text-slate-600 dark:text-slate-400">Por que escolher o modelo UX Envios para o seu negócio?</p>
                             </div>
 
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -476,16 +476,193 @@
                         <Globe className="w-12 h-12 mx-auto mb-6 text-sky-500" />
                         <h2 className="text-2xl font-bold mb-4">O Novo Standard Logístico</h2>
                         <p className="text-slate-300 max-w-3xl mx-auto text-lg leading-relaxed mb-8">
-                            O modelo <strong>ENVIOS LEVE</strong> cria um ecossistema integrado que empodera o Seller a focar no que mais importa: as vendas. Toda a complexidade, regras fiscais e capilaridade de entrega são solucionadas por uma arquitetura única e transparente.
+                            O modelo <strong>UX ENVIOS</strong> cria um ecossistema integrado que empodera o Seller a focar no que mais importa: as vendas. Toda a complexidade, regras fiscais e capilaridade de entrega são solucionadas por uma arquitetura única e transparente.
                         </p>
                     </div>
                 </div>
             </div>
         );
 
+
+        // --- FLUXO EXECUTIVO EM RAIAS ---
+        const ExecutiveFlow = () => {
+            const lanes = [
+                {
+                    title: "Pedido & Cut-off",
+                    subtitle: "Mirakl / Carrefour",
+                    emoji: "🛒",
+                    color: "blue",
+                    footer: "Pedido elegível para coleta",
+                    blocks: [
+                        { emoji: "✅", title: "Pagamento aprovado", text: "Pedidos aprovados até 10h59 entram no romaneio do mesmo dia." },
+                        { emoji: "🧾", title: "NF autorizada", text: "Validação SEFAZ antes da geração da etiqueta." }
+                    ]
+                },
+                {
+                    title: "Fiscal & Etiqueta",
+                    subtitle: "Fusion / Mirakl",
+                    emoji: "🏷️",
+                    color: "cyan",
+                    footer: "Documentos prontos",
+                    blocks: [
+                        { emoji: "🏷️", title: "Etiqueta Fusion", text: "Etiqueta de transporte disponível para impressão pelo seller." },
+                        { emoji: "📋", title: "DANFE & Romaneio", text: "Romaneio impresso em duas vias e assinado na coleta." }
+                    ]
+                },
+                {
+                    title: "Seller & Coleta",
+                    subtitle: "Preparação / First Mile",
+                    emoji: "📦",
+                    color: "violet",
+                    footer: "Volumes preparados",
+                    blocks: [
+                        { emoji: "📦", title: "Separação e embalagem", text: "Produto separado, embalado e identificado corretamente." },
+                        { emoji: "🚚", title: "Coleta UX", text: "Coleta operacional entre 13h e 18h." },
+                        { emoji: "📡", title: "Bipagem & tracking", text: "Bipagem inicia a visibilidade no OndeTah." }
+                    ]
+                },
+                {
+                    title: "Hub Transporte UX",
+                    subtitle: "Cross-docking",
+                    emoji: "🏬",
+                    color: "emerald",
+                    footer: "Triagem sem estoque",
+                    blocks: [
+                        { emoji: "🏬", title: "Entrada no Hub", text: "Recebimento operacional e conferência dos volumes." },
+                        { emoji: "🔄", title: "Triagem rápida", text: "Passagem rápida sem armazenamento prolongado." },
+                        { emoji: "🗺️", title: "Roteirização", text: "Distribuição para rotas de last mile." }
+                    ]
+                },
+                {
+                    title: "Last Mile & Cliente",
+                    subtitle: "Entrega final",
+                    emoji: "🚚",
+                    color: "amber",
+                    footer: "Entrega concluída",
+                    blocks: [
+                        { emoji: "📍", title: "Transporte final", text: "Saída para entrega ao consumidor." },
+                        { emoji: "✔️", title: "Cliente final", text: "Baixa de entrega e prova de entrega." }
+                    ]
+                }
+            ];
+
+            const laneColor = {
+                blue: "bg-blue-50 border-blue-200 text-blue-900",
+                cyan: "bg-cyan-50 border-cyan-200 text-cyan-900",
+                violet: "bg-violet-50 border-violet-200 text-violet-900",
+                emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
+                amber: "bg-amber-50 border-amber-200 text-amber-900"
+            };
+
+            const dotColor = {
+                blue: "bg-blue-600",
+                cyan: "bg-cyan-600",
+                violet: "bg-violet-600",
+                emerald: "bg-emerald-600",
+                amber: "bg-amber-500"
+            };
+
+            const footerColor = {
+                blue: "bg-blue-100 text-blue-700",
+                cyan: "bg-cyan-100 text-cyan-700",
+                violet: "bg-violet-100 text-violet-700",
+                emerald: "bg-emerald-100 text-emerald-700",
+                amber: "bg-amber-100 text-amber-700"
+            };
+
+            const arrowColors = ["#2563eb", "#7c3aed", "#059669", "#2563eb"];
+
+            return (
+                <div className="w-full h-full overflow-auto bg-slate-100 dark:bg-slate-900 p-8 transition-colors duration-300">
+                    <div className="min-w-[1320px] max-w-[1500px] mx-auto bg-white dark:bg-slate-800 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-xl p-8">
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-black tracking-[0.22em] uppercase text-slate-800 dark:text-white">Fluxo Executivo - UX Envios</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                                Visão em raias da jornada operacional: pedido, etiqueta, seller, coleta, Hub Transporte UX, last mile e cliente final.
+                            </p>
+                        </div>
+
+                        <div className="relative grid grid-cols-5 gap-5">
+                            <svg className="absolute inset-0 w-full h-[520px] pointer-events-none z-20" viewBox="0 0 1320 520" preserveAspectRatio="none">
+                                <defs>
+                                    <filter id="execArrowShadow" x="-30%" y="-30%" width="160%" height="160%">
+                                        <feDropShadow dx="0" dy="1" stdDeviation="1.2" floodColor="#0f172a" floodOpacity="0.18"/>
+                                    </filter>
+                                    <marker id="execArrowHead" viewBox="0 0 16 16" refX="13" refY="8" markerWidth="9" markerHeight="9" orient="auto">
+                                        <path d="M0 0 L16 8 L0 16 Z" fill="#2563eb"/>
+                                    </marker>
+                                </defs>
+                                {[1,2,3,4].map((i) => {
+                                    const x1 = i * 264 - 18;
+                                    const x2 = i * 264 + 22;
+                                    const color = arrowColors[i - 1];
+                                    return (
+                                        <g key={i} filter="url(#execArrowShadow)">
+                                            <line x1={x1} y1="260" x2={x2} y2="260" stroke="#fff" strokeWidth="8" strokeLinecap="round"/>
+                                            <line x1={x1} y1="260" x2={x2} y2="260" stroke={color} strokeWidth="4" strokeLinecap="round" markerEnd="url(#execArrowHead)"/>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+
+                            {lanes.map((lane, index) => (
+                                <div key={lane.title} className={`relative z-10 rounded-2xl border ${laneColor[lane.color]} p-4 min-h-[520px] shadow-sm flex flex-col`}>
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className={`h-7 w-7 rounded-lg ${dotColor[lane.color]} text-white text-sm font-black flex items-center justify-center shadow-sm`}>{index + 1}</div>
+                                        <div className="h-10 w-10 rounded-xl bg-white/80 flex items-center justify-center border border-white shadow-sm text-[22px]">{lane.emoji}</div>
+                                        <div>
+                                            <h3 className="font-black uppercase tracking-wide text-sm leading-tight">{lane.title}</h3>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{lane.subtitle}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3 flex-1">
+                                        {lane.blocks.map(block => (
+                                            <div key={block.title} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex items-center gap-3 shadow-sm">
+                                                <div className="h-11 w-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[22px] shrink-0">{block.emoji}</div>
+                                                <div>
+                                                    <h4 className="font-black text-[13px] uppercase tracking-wide text-slate-800 dark:text-slate-100 leading-tight">{block.title}</h4>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{block.text}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className={`mt-4 text-center rounded-xl ${footerColor[lane.color]} text-xs font-bold p-3`}>{lane.footer}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="relative mt-6 rounded-2xl border border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-900/20 p-4 shadow-sm">
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-800 px-4 py-1 rounded-full border border-orange-200 dark:border-orange-900 text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wide">
+                                Monitoramento & SLA - Camada Transversal
+                            </div>
+                            <div className="grid grid-cols-4 gap-4 pt-4">
+                                {[
+                                    ["📊", "Tracking real time", "OndeTah / Mirakl"],
+                                    ["📝", "Auditoria", "Romaneio, bipagem e evidências"],
+                                    ["⚠️", "Ocorrências", "Tratativas e acariação"],
+                                    ["⏱️", "SLA", "Same Day / Next Day"]
+                                ].map(([emoji, title, desc]) => (
+                                    <div key={title} className="bg-white dark:bg-slate-900 rounded-2xl border border-orange-100 dark:border-orange-900/50 p-4 flex items-center gap-3">
+                                        <div className="h-11 w-11 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center text-[22px]">{emoji}</div>
+                                        <div>
+                                            <h4 className="font-black text-xs uppercase text-slate-800 dark:text-slate-100">{title}</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
         // --- APP PRINCIPAL ---
         function App() {
-            const [activeTab, setActiveTab] = useState('presentation'); 
+            const [activeTab, setActiveTab] = useState('executive'); 
             const [selectedNode, setSelectedNode] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(true);
             const [isDarkMode, setIsDarkMode] = useState(false);
@@ -533,19 +710,26 @@
                                 <div className="flex items-center gap-4 border-r border-slate-200 dark:border-slate-700 pr-6 h-12">
                                     <LogoUX className="h-3/4 w-auto text-black dark:text-white" />
                                     <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
-                                    <span className="font-bold text-blue-800 dark:text-blue-400 text-xl tracking-tight">Carrefour</span>
+                                    <span className="font-bold text-blue-800 dark:text-blue-400 text-xl tracking-tight">UX Envios</span>
                                 </div>
 
                                 <div className="hidden sm:block">
-                                    <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">Projeto Envios</h1>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Operação Leve</p>
+                                    <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-none">Projeto UX Envios</h1>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Operação Leve / First Mile / Last Mile</p>
                                 </div>
                             </div>
                             
                             <div className="flex items-center gap-4 mt-2 sm:mt-0">
                                 {/* Tabs */}
                                 <div className="bg-slate-100 dark:bg-slate-900 p-1 rounded-lg flex text-sm font-semibold shadow-inner border border-slate-200 dark:border-slate-700">
+                                    
                                     <button 
+                                        onClick={() => setActiveTab('executive')}
+                                        className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'executive' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                    >
+                                        <Layers size={16} /> <span className="hidden md:inline">Fluxo Executivo</span>
+                                    </button>
+<button 
                                         onClick={() => setActiveTab('presentation')}
                                         className={`px-4 py-2 rounded-md transition-all flex items-center gap-2 ${activeTab === 'presentation' ? 'bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-500 shadow-sm ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                                     >
@@ -572,7 +756,9 @@
 
                         {/* Conteudo Principal */}
                         <div className="flex flex-1 overflow-hidden relative">
-                            {activeTab === 'presentation' ? (
+                            {activeTab === 'executive' ? (
+                                <ExecutiveFlow />
+                            ) : activeTab === 'presentation' ? (
                                 <SellerPresentation />
                             ) : (
                                 <>
@@ -659,7 +845,7 @@
                                                         </div>
                                                         <div>
                                                             <h3 className="font-bold text-xl text-slate-900 dark:text-white">Visão Geral</h3>
-                                                            <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">Fluxo Integrado Leve</span>
+                                                            <span className="text-xs font-mono bg-slate-800 text-white px-2 py-0.5 rounded mt-1 inline-block">Fluxo Integrado UX Envios</span>
                                                         </div>
                                                     </div>
                                                     
@@ -668,7 +854,7 @@
                                                             <FileText size={12}/> Resumo do Processo
                                                         </h4>
                                                         <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                                                            Este diagrama detalha de forma exata a operação de <strong className="dark:text-white">Envios Leve</strong> apresentada nos mapeamentos.
+                                                            Este diagrama detalha de forma exata a operação de <strong className="dark:text-white">UX Envios</strong> apresentada nos mapeamentos.
                                                             <br/><br/>
                                                             O fluxo obedece às regras de aprovação (<strong className="dark:text-white">Cut-off 10h59m59s</strong>) e aos agendamentos precisos (<strong className="dark:text-white">Janela 13h-18h</strong>).
                                                         </p>
